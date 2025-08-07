@@ -160,12 +160,12 @@ class ClientManager {
 const clientManager = new ClientManager();
 
 // Validation schemas
-const AddressSchema = z.string().refine((val) => isAddress(val), {
+const _AddressSchema = z.string().refine((val) => isAddress(val), {
   message: "Invalid Ethereum address",
 });
-const HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid hash");
+const _HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid hash");
 // Create dynamic chain name schema from supported chains
-const ChainNameSchema = z.string().refine((chainName: string) => chainName in SUPPORTED_CHAINS, {
+const _ChainNameSchema = z.string().refine((chainName: string) => chainName in SUPPORTED_CHAINS, {
   message: "Unsupported chain. Use 'listSupportedChains' tool to see available chains.",
 });
 
