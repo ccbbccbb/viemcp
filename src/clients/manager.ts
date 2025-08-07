@@ -32,7 +32,9 @@ export class ClientManager {
     };
 
     const customRpc = envVarMap[chain.id];
-    if (customRpc) {return customRpc;}
+    if (customRpc) {
+      return customRpc;
+    }
 
     // Fall back to public RPC
     return undefined;

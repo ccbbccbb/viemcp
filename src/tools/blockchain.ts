@@ -281,7 +281,7 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const client = clientManager.getClient(chainId);
         const gas = await client.estimateGas({
           to: to as Address,
-          from: from as Address | undefined,
+          account: from as Address | undefined,
           value: value ? BigInt(value) : undefined,
           data: data as `0x${string}` | undefined,
         });

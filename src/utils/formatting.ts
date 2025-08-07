@@ -11,17 +11,23 @@ export function parseAmount(amount: string, decimals: number = 18): bigint {
 }
 
 export function shortenAddress(address: string): string {
-  if (!address) {return "";}
+  if (!address) {
+    return "";
+  }
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 export function formatBlockNumber(blockNumber: bigint | null): string {
-  if (!blockNumber) {return "N/A";}
+  if (!blockNumber) {
+    return "N/A";
+  }
   return blockNumber.toString();
 }
 
 export function formatGasPrice(gasPrice: bigint | null): string {
-  if (!gasPrice) {return "N/A";}
+  if (!gasPrice) {
+    return "N/A";
+  }
   const gwei = Number(gasPrice) / 1e9;
   return `${gwei.toFixed(2)} Gwei`;
 }

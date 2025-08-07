@@ -1,6 +1,7 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { type Address, normalize } from "viem/ens";
+import { type Address } from "viem";
+import { normalize } from "viem/ens";
 import { ClientManager } from "../clients/manager.js";
 import { AddressSchema } from "../utils/validation.js";
 import { handleToolError } from "../utils/errors.js";

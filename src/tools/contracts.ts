@@ -71,8 +71,8 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           function: functionName,
           result: result.result,
           request: {
-            to: result.request.to,
-            data: result.request.data,
+            address: result.request.address,
+            gas: result.request.gas?.toString(),
             value: result.request.value?.toString(),
           },
         });
@@ -136,7 +136,8 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
       try {
         const client = clientManager.getClient(chainId);
         const results = await client.multicall({
-          contracts: contracts.map((c) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          contracts: contracts.map((c: any) => ({
             address: c.address as Address,
             abi: c.abi as Abi,
             functionName: c.functionName,
@@ -146,11 +147,12 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
         });
 
         return jsonResponse({
-          results: results.map((result, index) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          results: results.map((result: any, index: number) => ({
             contract: contracts[index]?.address,
             function: contracts[index]?.functionName,
             result: result.status === "success" ? result.result : null,
-            error: result.status === "failure" ? result.error.message : null,
+            error: result.status === "failure" ? result.error?.message : null,
           })),
         });
       } catch (error) {

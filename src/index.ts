@@ -22,29 +22,32 @@ import { z } from "zod";
 // Helper function to get RPC URL from environment based on provider preference
 function getRpcUrl(chainName: string): string | undefined {
   const provider = process.env["RPC_PROVIDER"] || "drpc";
-  
+
   // Try various environment variable formats
   const envVariants = [
     chainName.toUpperCase(),
-    chainName.toUpperCase().replace('-', '_'),
-    chainName.toUpperCase().replace(' ', '_'),
-    chainName.replace(/([A-Z])/g, '_$1').toUpperCase().replace(/^_/, ''), // camelCase to SNAKE_CASE
+    chainName.toUpperCase().replace("-", "_"),
+    chainName.toUpperCase().replace(" ", "_"),
+    chainName
+      .replace(/([A-Z])/g, "_$1")
+      .toUpperCase()
+      .replace(/^_/, ""), // camelCase to SNAKE_CASE
   ];
-  
+
   for (const variant of envVariants) {
     // First try provider-specific URL
     const providerUrl = process.env[`${variant}_RPC_URL_${provider.toUpperCase()}`];
     if (providerUrl) {
       return providerUrl;
     }
-    
+
     // Fall back to generic URL
     const genericUrl = process.env[`${variant}_RPC_URL`];
     if (genericUrl) {
       return genericUrl;
     }
   }
-  
+
   return undefined;
 }
 
@@ -52,52 +55,55 @@ function getRpcUrl(chainName: string): string | undefined {
 const createChainMapping = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapping: Record<string, any> = {};
-  
+
   // Add all viem chains with their original names
   Object.entries(chains).forEach(([key, chain]) => {
-    if (chain && typeof chain === 'object' && 'id' in chain && 'name' in chain) {
+    if (chain && typeof chain === "object" && "id" in chain && "name" in chain) {
       // Add with original export name (camelCase)
       mapping[key] = chain;
-      
+
       // Add with lowercase version
       mapping[key.toLowerCase()] = chain;
-      
+
       // Add with kebab-case version
-      const kebabCase = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+      const kebabCase = key
+        .replace(/([A-Z])/g, "-$1")
+        .toLowerCase()
+        .replace(/^-/, "");
       if (kebabCase !== key.toLowerCase()) {
         mapping[kebabCase] = chain;
       }
-      
+
       // Add common aliases
-      if (key === 'mainnet') {
-        mapping['ethereum'] = chain;
-        mapping['eth'] = chain;
+      if (key === "mainnet") {
+        mapping["ethereum"] = chain;
+        mapping["eth"] = chain;
       }
-      if (key === 'bsc') {
-        mapping['bnb'] = chain;
-        mapping['binance'] = chain;
+      if (key === "bsc") {
+        mapping["bnb"] = chain;
+        mapping["binance"] = chain;
       }
-      if (key === 'avalanche') {
-        mapping['avax'] = chain;
+      if (key === "avalanche") {
+        mapping["avax"] = chain;
       }
-      if (key === 'arbitrum') {
-        mapping['arb'] = chain;
+      if (key === "arbitrum") {
+        mapping["arb"] = chain;
       }
-      if (key === 'optimism') {
-        mapping['op'] = chain;
+      if (key === "optimism") {
+        mapping["op"] = chain;
       }
-      if (key === 'polygon') {
-        mapping['matic'] = chain;
+      if (key === "polygon") {
+        mapping["matic"] = chain;
       }
-      if (key === 'fantom') {
-        mapping['ftm'] = chain;
+      if (key === "fantom") {
+        mapping["ftm"] = chain;
       }
-      if (key === 'klaytn') {
-        mapping['kaia'] = chain;
+      if (key === "klaytn") {
+        mapping["kaia"] = chain;
       }
     }
   });
-  
+
   return mapping;
 };
 
@@ -112,19 +118,19 @@ class ClientManager {
 
   getClient(chainName?: SupportedChainName) {
     const chain = chainName ? SUPPORTED_CHAINS[chainName] : chains.mainnet;
-    
+
     if (!chain) {
-      throw new Error(`Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`);
+      throw new Error(
+        `Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`
+      );
     }
-    
+
     if (!this.clients.has(chain.id)) {
       // Try to get custom RPC URL from environment
       const customRpcUrl = chainName ? getRpcUrl(chainName) : undefined;
-      
-      const transport = customRpcUrl 
-        ? http(customRpcUrl)
-        : http(); // Falls back to viem's default public RPC
-      
+
+      const transport = customRpcUrl ? http(customRpcUrl) : http(); // Falls back to viem's default public RPC
+
       this.clients.set(
         chain.id,
         createPublicClient({
@@ -132,19 +138,19 @@ class ClientManager {
           transport,
         })
       );
-      
+
       if (customRpcUrl) {
         console.error(`Using custom RPC for ${chainName}: ${customRpcUrl}`);
       }
     }
-    
+
     const client = this.clients.get(chain.id);
     if (!client) {
       throw new Error(`Client for chain ${chain.id} not found`);
     }
     return client;
   }
-  
+
   // Get all supported chain names
   getSupportedChains(): string[] {
     return Object.keys(SUPPORTED_CHAINS);
@@ -159,12 +165,9 @@ const AddressSchema = z.string().refine((val) => isAddress(val), {
 });
 const HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid hash");
 // Create dynamic chain name schema from supported chains
-const ChainNameSchema = z.string().refine(
-  (chainName: string) => chainName in SUPPORTED_CHAINS,
-  { 
-    message: "Unsupported chain. Use 'listSupportedChains' tool to see available chains." 
-  }
-);
+const ChainNameSchema = z.string().refine((chainName: string) => chainName in SUPPORTED_CHAINS, {
+  message: "Unsupported chain. Use 'listSupportedChains' tool to see available chains.",
+});
 
 // Create server instance
 const server = new McpServer(
@@ -217,17 +220,34 @@ server.tool(
   "getBalance",
   "Get native token balance for an address",
   {
-    address: AddressSchema.describe("Ethereum address"),
-    chain: ChainNameSchema.optional().describe("Chain to query"),
+    type: "object",
+    properties: {
+      address: {
+        type: "string",
+        description: "Ethereum address",
+      },
+      chain: {
+        type: "string", 
+        description: "Chain to query",
+      },
+    },
+    required: ["address"],
   },
   async ({ address, chain }) => {
     try {
+      // Validate address
+      if (!isAddress(address)) {
+        throw new Error("Invalid Ethereum address");
+      }
+      
       const client = clientManager.getClient(chain);
       const balance = await client.getBalance({
         address: address as Address,
       });
 
-      return textResponse(`Balance: ${formatEther(balance)} ${client.chain?.nativeCurrency.symbol || 'ETH'}`);
+      return textResponse(
+        `Balance: ${formatEther(balance)} ${client.chain?.nativeCurrency.symbol || "ETH"}`
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -238,7 +258,14 @@ server.tool(
   "getBlockNumber",
   "Get current block number",
   {
-    chain: ChainNameSchema.optional().describe("Chain to query"),
+    type: "object",
+    properties: {
+      chain: {
+        type: "string",
+        description: "Chain to query",
+      },
+    },
+    required: [],
   },
   async ({ chain }) => {
     try {
@@ -256,11 +283,27 @@ server.tool(
   "getTransaction",
   "Get transaction details",
   {
-    hash: HashSchema.describe("Transaction hash"),
-    chain: ChainNameSchema.optional().describe("Chain to query"),
+    type: "object",
+    properties: {
+      hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "Transaction hash",
+      },
+      chain: {
+        type: "string",
+        description: "Chain to query",
+      },
+    },
+    required: ["hash"],
   },
   async ({ hash, chain }) => {
     try {
+      // Validate hash format
+      if (!/^0x[a-fA-F0-9]{64}$/.test(hash)) {
+        throw new Error("Invalid transaction hash format");
+      }
+      
       const client = clientManager.getClient(chain);
       const tx = await client.getTransaction({ hash: hash as Hash });
 
@@ -283,14 +326,38 @@ server.tool(
   "readContract",
   "Read from smart contract",
   {
-    address: AddressSchema.describe("Contract address"),
-    abi: z.array(z.any()).describe("Contract ABI"),
-    functionName: z.string().describe("Function name"),
-    args: z.array(z.any()).optional().describe("Function arguments"),
-    chain: ChainNameSchema.optional().describe("Chain to query"),
+    type: "object",
+    properties: {
+      address: {
+        type: "string",
+        description: "Contract address",
+      },
+      abi: {
+        type: "array",
+        description: "Contract ABI",
+      },
+      functionName: {
+        type: "string",
+        description: "Function name",
+      },
+      args: {
+        type: "array",
+        description: "Function arguments",
+      },
+      chain: {
+        type: "string",
+        description: "Chain to query",
+      },
+    },
+    required: ["address", "abi", "functionName"],
   },
   async ({ address, abi, functionName, args, chain }) => {
     try {
+      // Validate address
+      if (!isAddress(address)) {
+        throw new Error("Invalid contract address");
+      }
+      
       const client = clientManager.getClient(chain);
       const result = await client.readContract({
         address: address as Address,
@@ -311,12 +378,33 @@ server.tool(
   "getERC20Balance",
   "Get ERC20 token balance",
   {
-    tokenAddress: AddressSchema.describe("Token contract address"),
-    ownerAddress: AddressSchema.describe("Owner address"),
-    chain: ChainNameSchema.optional().describe("Chain to query"),
+    type: "object",
+    properties: {
+      tokenAddress: {
+        type: "string",
+        description: "Token contract address",
+      },
+      ownerAddress: {
+        type: "string", 
+        description: "Owner address",
+      },
+      chain: {
+        type: "string",
+        description: "Chain to query",
+      },
+    },
+    required: ["tokenAddress", "ownerAddress"],
   },
   async ({ tokenAddress, ownerAddress, chain }) => {
     try {
+      // Validate addresses
+      if (!isAddress(tokenAddress)) {
+        throw new Error("Invalid token contract address");
+      }
+      if (!isAddress(ownerAddress)) {
+        throw new Error("Invalid owner address");
+      }
+      
       const client = clientManager.getClient(chain);
 
       const [balance, decimals, symbol] = await Promise.all([
@@ -354,7 +442,14 @@ server.tool(
   "resolveEnsAddress",
   "Resolve ENS name to address",
   {
-    name: z.string().describe("ENS name"),
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+        description: "ENS name",
+      },
+    },
+    required: ["name"],
   },
   async ({ name }) => {
     try {
@@ -375,7 +470,14 @@ server.tool(
   "parseEther",
   "Convert ETH to wei",
   {
-    value: z.string().describe("ETH amount"),
+    type: "object",
+    properties: {
+      value: {
+        type: "string",
+        description: "ETH amount",
+      },
+    },
+    required: ["value"],
   },
   async ({ value }) => {
     try {
@@ -391,7 +493,14 @@ server.tool(
   "formatEther",
   "Convert wei to ETH",
   {
-    value: z.string().describe("Wei amount"),
+    type: "object",
+    properties: {
+      value: {
+        type: "string",
+        description: "Wei amount",
+      },
+    },
+    required: ["value"],
   },
   async ({ value }) => {
     try {
@@ -407,7 +516,14 @@ server.tool(
   "isAddress",
   "Validate Ethereum address",
   {
-    address: z.string().describe("Address to validate"),
+    type: "object",
+    properties: {
+      address: {
+        type: "string",
+        description: "Address to validate",
+      },
+    },
+    required: ["address"],
   },
   async ({ address }) => {
     try {
@@ -423,7 +539,14 @@ server.tool(
   "keccak256",
   "Hash data with Keccak256",
   {
-    data: z.string().describe("Data to hash"),
+    type: "object",
+    properties: {
+      data: {
+        type: "string",
+        description: "Data to hash",
+      },
+    },
+    required: ["data"],
   },
   async ({ data }) => {
     try {
@@ -436,7 +559,15 @@ server.tool(
 );
 
 // Multi-chain Tools
-server.tool("listSupportedChains", "List supported chains", {}, async () => {
+server.tool(
+  "listSupportedChains", 
+  "List supported chains", 
+  {
+    type: "object",
+    properties: {},
+    required: [],
+  }, 
+  async () => {
   const chains = Object.entries(SUPPORTED_CHAINS).map(([name, chain]) => ({
     name,
     chainId: chain.id,

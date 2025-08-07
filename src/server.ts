@@ -34,56 +34,10 @@ export async function createServer() {
   registerUtilityTools(server);
   registerMultiChainTools(server, clientManager);
 
-  // Add resources (example)
-  server.resource("chains/*", "Get chain information and current state", async (request) => {
-    const uri = request.params.uri;
-    const match = uri.match(/^chains\/(.+)$/);
-
-    if (!match) {
-      throw new Error("Invalid chain resource URI");
-    }
-
-    const chainName = match[1];
-
-    try {
-      const client = clientManager.getClient(chainName as any);
-      const chain = client.chain;
-
-      if (!chain) {
-        throw new Error(`Chain ${chainName} not found`);
-      }
-
-      const blockNumber = await client.getBlockNumber();
-      const gasPrice = await client.getGasPrice();
-
-      return {
-        contents: [
-          {
-            uri: `chains/${chainName}`,
-            mimeType: "application/json",
-            text: JSON.stringify(
-              {
-                name: chainName,
-                chainId: chain.id,
-                displayName: chain.name,
-                nativeCurrency: chain.nativeCurrency,
-                currentBlock: blockNumber.toString(),
-                gasPrice: gasPrice.toString(),
-                rpcUrls: chain.rpcUrls,
-                blockExplorers: chain.blockExplorers,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new Error(
-        `Error getting chain info: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  });
+  // TODO: Add resources (currently commented out due to MCP SDK typing issues)
+  // server.resource("chains/*", "Get chain information and current state", async (uri) => {
+  //   // Implementation here...
+  // });
 
   return server;
 }

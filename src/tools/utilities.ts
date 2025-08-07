@@ -196,6 +196,7 @@ export function registerUtilityTools(server: McpServer) {
     },
     async ({ hex, to }) => {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = fromHex(hex as `0x${string}`, to as any);
         return jsonResponse({
           hex,
@@ -218,6 +219,7 @@ export function registerUtilityTools(server: McpServer) {
     },
     async ({ types, values }) => {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const encoded = encodePacked(types as any, values as any);
         return jsonResponse({
           types,
@@ -242,6 +244,7 @@ export function registerUtilityTools(server: McpServer) {
     async ({ hex, size, direction }) => {
       try {
         const padded = pad(hex as `0x${string}`, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           size: size as any,
           dir: direction,
         });
