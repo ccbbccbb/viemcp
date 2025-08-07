@@ -1,6 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-type GithubTreeEntry = { path: string; mode: string; type: "blob" | "tree"; sha: string; url: string };
+type GithubTreeEntry = {
+  path: string;
+  mode: string;
+  type: "blob" | "tree";
+  sha: string;
+  url: string;
+};
 
 function getGithubHeaders(): Record<string, string> {
   return {
@@ -66,17 +72,21 @@ export async function setupGithubDocsResources(server: McpServer) {
     // Group by top-level folder to mirror sections
     const groups = new Map<string, string[]>();
     for (const p of mdxPaths) {
-      const top = (p.split("/")[0] ?? "root");
-      const list = groups.get(top) ?? [] as string[];
+      const top = p.split("/")[0] ?? "root";
+      const list = groups.get(top) ?? ([] as string[]);
       list.push(p);
       groups.set(top, list);
     }
     const indexTextLines = [`Viem GitHub docs (branch: ${branch})`, ""];
-    const folders: string[] = Array.from(groups.keys()).filter((x): x is string => typeof x === "string");
+    const folders: string[] = Array.from(groups.keys()).filter(
+      (x): x is string => typeof x === "string"
+    );
     folders.sort();
     for (const folder of folders) {
       indexTextLines.push(`### ${folder}`);
-      const baseFiles: string[] = (groups.get(folder) ?? []).filter((x): x is string => typeof x === "string");
+      const baseFiles: string[] = (groups.get(folder) ?? []).filter(
+        (x): x is string => typeof x === "string"
+      );
       const files = baseFiles.slice();
       files.sort();
       for (const f of files) {
@@ -92,12 +102,15 @@ export async function setupGithubDocsResources(server: McpServer) {
         description: "List of all Viem GitHub docs registered as resources",
         mimeType: "text/markdown",
       },
-      async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: indexTextLines.join("\n") }] })
+      async (uri) => ({
+        contents: [{ uri: uri.href, mimeType: "text/markdown", text: indexTextLines.join("\n") }],
+      })
     );
     mdxPaths.forEach((p) => registerGithubDocResource(server, p));
   } catch (error) {
-    console.error("Failed to setup GitHub docs resources:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "Failed to setup GitHub docs resources:",
+      error instanceof Error ? error.message : String(error)
+    );
   }
 }
-
-

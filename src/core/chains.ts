@@ -7,7 +7,10 @@ export function getRpcUrl(chainName: string): string | undefined {
     chainName.toUpperCase(),
     chainName.toUpperCase().replace("-", "_"),
     chainName.toUpperCase().replace(" ", "_"),
-    chainName.replace(/([A-Z])/g, "_$1").toUpperCase().replace(/^_/, ""),
+    chainName
+      .replace(/([A-Z])/g, "_$1")
+      .toUpperCase()
+      .replace(/^_/, ""),
   ];
 
   for (const variant of envVariants) {
@@ -70,7 +73,11 @@ export async function resolveChainById(id: number): Promise<Chain | undefined> {
     const all = await import("viem/chains");
     const values = Object.values(all) as unknown[];
     const chain = values.find(
-      (c) => c && typeof c === "object" && "id" in (c as Record<string, unknown>) && (c as { id: number }).id === id
+      (c) =>
+        c &&
+        typeof c === "object" &&
+        "id" in (c as Record<string, unknown>) &&
+        (c as { id: number }).id === id
     ) as Chain | undefined;
     return chain;
   } catch {
@@ -95,5 +102,3 @@ export function loadCustomChainsFromEnv() {
     // ignore invalid JSON
   }
 }
-
-

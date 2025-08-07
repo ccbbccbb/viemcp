@@ -43,7 +43,6 @@
     "format:check": "prettier --check .",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "types": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run clean && bun run lint && bun run format:check && bun run typecheck && bun run build",
     "prepublishOnly": "bun run prepack",

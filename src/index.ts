@@ -3,7 +3,19 @@
 import "dotenv/config";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { type Address, type Hash, parseEther, formatEther, formatGwei, erc20Abi, isAddress, keccak256, toHex, encodeFunctionData, encodeDeployData } from "viem";
+import {
+  type Address,
+  type Hash,
+  parseEther,
+  formatEther,
+  formatGwei,
+  erc20Abi,
+  isAddress,
+  keccak256,
+  toHex,
+  encodeFunctionData,
+  encodeDeployData,
+} from "viem";
 import { normalize } from "viem/ens";
 import { z } from "zod";
 import { registerEVMPrompts } from "./core/prompts.js";
@@ -59,7 +71,10 @@ server.tool(
         throw new Error("Invalid address");
       }
       const client = clientManager.getClient(chain);
-      const count = await client.getTransactionCount({ address: address as Address, blockTag: blockTag as never });
+      const count = await client.getTransactionCount({
+        address: address as Address,
+        blockTag: blockTag as never,
+      });
       return jsonResponse({ address, nonce: count, chain: client.chain?.name });
     } catch (error) {
       return handleError(error);
@@ -129,7 +144,8 @@ server.tool(
       if (Array.isArray(topics)) {
         params["topics"] = topics as unknown[];
       }
-      const parseBlock = (v?: string) => (v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never));
+      const parseBlock = (v?: string) =>
+        v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never);
       if (fromBlock) {
         params["fromBlock"] = parseBlock(fromBlock);
       }
@@ -168,7 +184,11 @@ server.tool(
         ? (newestBlock as never)
         : (BigInt(newestBlock) as never);
       const rewards = Array.isArray(rewardPercentiles) ? (rewardPercentiles as number[]) : [];
-      const history = await client.getFeeHistory({ blockCount: count, rewardPercentiles: rewards, blockTag: nb });
+      const history = await client.getFeeHistory({
+        blockCount: count,
+        rewardPercentiles: rewards,
+        blockTag: nb,
+      });
       return jsonResponse(history);
     } catch (error) {
       return handleError(error);
@@ -220,7 +240,7 @@ server.tool(
         description: "Ethereum address",
       },
       chain: {
-        type: "string", 
+        type: "string",
         description: "Chain to query",
       },
     },
@@ -232,7 +252,7 @@ server.tool(
       if (!isAddress(address)) {
         throw new Error("Invalid Ethereum address");
       }
-      
+
       const client = clientManager.getClient(chain);
       const balance = await client.getBalance({
         address: address as Address,
@@ -296,7 +316,7 @@ server.tool(
       if (!/^0x[a-fA-F0-9]{64}$/.test(hash)) {
         throw new Error("Invalid transaction hash format");
       }
-      
+
       const client = clientManager.getClient(chain);
       const tx = await client.getTransaction({ hash: hash as Hash });
 
@@ -350,7 +370,7 @@ server.tool(
       if (!isAddress(address)) {
         throw new Error("Invalid contract address");
       }
-      
+
       const client = clientManager.getClient(chain);
       const result = await client.readContract({
         address: address as Address,
@@ -378,7 +398,7 @@ server.tool(
         description: "Token contract address",
       },
       ownerAddress: {
-        type: "string", 
+        type: "string",
         description: "Owner address",
       },
       chain: {
@@ -397,7 +417,7 @@ server.tool(
       if (!isAddress(ownerAddress)) {
         throw new Error("Invalid owner address");
       }
-      
+
       const client = clientManager.getClient(chain);
 
       const [balance, decimals, symbol] = await Promise.all([
@@ -439,7 +459,11 @@ server.tool(
     properties: {
       name: { type: "string", description: "ENS name (e.g., vitalik.eth)" },
       chain: { type: "string", description: "Chain to use (defaults to ethereum)" },
-      includeAvatar: { type: "boolean", description: "If true, also return ENS avatar", default: false },
+      includeAvatar: {
+        type: "boolean",
+        description: "If true, also return ENS avatar",
+        default: false,
+      },
       textKeys: {
         type: "array",
         description: "If provided, return these ENS text records (e.g., com.twitter, url)",
@@ -466,9 +490,7 @@ server.tool(
         texts = {};
         for (const key of textKeys) {
           // catch per-key to avoid failing the whole request
-          const value = await client
-            .getEnsText({ name: normalized, key })
-            .catch(() => null);
+          const value = await client.getEnsText({ name: normalized, key }).catch(() => null);
           texts[key] = value as string | null;
         }
       }
@@ -581,23 +603,24 @@ server.tool(
 
 // Multi-chain Tools
 server.tool(
-  "listSupportedChains", 
-  "List supported chains", 
+  "listSupportedChains",
+  "List supported chains",
   {
     type: "object",
     properties: {},
     required: [],
-  }, 
+  },
   async () => {
-  const chains = Object.entries(SUPPORTED_CHAINS).map(([name, chain]) => ({
-    name,
-    chainId: chain.id,
-    displayName: chain.name,
-    nativeCurrency: chain.nativeCurrency.symbol,
-  }));
+    const chains = Object.entries(SUPPORTED_CHAINS).map(([name, chain]) => ({
+      name,
+      chainId: chain.id,
+      displayName: chain.name,
+      nativeCurrency: chain.nativeCurrency.symbol,
+    }));
 
-  return jsonResponse({ supportedChains: chains });
-});
+    return jsonResponse({ supportedChains: chains });
+  }
+);
 
 // Tranche 1 — Core public actions
 server.tool(
@@ -626,7 +649,9 @@ server.tool(
       const client = clientManager.getClient(chain);
       const input = (numberOrTag ?? "").trim().toLowerCase();
       if (!input) {
-        throw new Error("'numberOrTag' is required (e.g., 'latest' or a block number like '12345' or '0xabc')");
+        throw new Error(
+          "'numberOrTag' is required (e.g., 'latest' or a block number like '12345' or '0xabc')"
+        );
       }
 
       const tagSet = new Set(["latest", "earliest", "pending"]);
@@ -715,7 +740,7 @@ server.tool(
     type: "object",
     properties: {
       from: { type: "string", description: "Sender address" },
-      to: { type: "string", description: "Recipient address (optional for deploy)", },
+      to: { type: "string", description: "Recipient address (optional for deploy)" },
       data: { type: "string", description: "Calldata (0x...)" },
       value: { type: "string", description: "Value in wei as string" },
       chain: { type: "string", description: "Chain to query" },
@@ -901,7 +926,12 @@ server.tool(
         throw new Error("'contracts' must be a non-empty array");
       }
       // Basic validation and shape normalization
-      type PartialContract = { address: string; abi: unknown[]; functionName: string; args?: unknown[] };
+      type PartialContract = {
+        address: string;
+        abi: unknown[];
+        functionName: string;
+        args?: unknown[];
+      };
       const normalized = (contracts as PartialContract[]).map((c) => {
         if (!c || !isAddress(c.address)) {
           throw new Error("Each contract must have a valid 'address'");
@@ -1013,13 +1043,17 @@ server.tool(
       }
       const client = clientManager.getClient(chain);
       const [name, symbol, decimals] = await Promise.all([
-        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "name" }).catch(
-          () => ""
-        ),
-        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "symbol" }).catch(
-          () => ""
-        ),
-        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "decimals" }),
+        client
+          .readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "name" })
+          .catch(() => ""),
+        client
+          .readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "symbol" })
+          .catch(() => ""),
+        client.readContract({
+          address: tokenAddress as Address,
+          abi: erc20Abi,
+          functionName: "decimals",
+        }),
       ]);
       return jsonResponse({ tokenAddress, name, symbol, decimals: Number(decimals) });
     } catch (error) {
@@ -1114,7 +1148,18 @@ server.tool(
     },
     required: [],
   },
-  async ({ from, to, data, value, gas, maxFeePerGas, maxPriorityFeePerGas, gasPrice, nonce, chain }) => {
+  async ({
+    from,
+    to,
+    data,
+    value,
+    gas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    gasPrice,
+    nonce,
+    chain,
+  }) => {
     try {
       const client = clientManager.getClient(chain);
       const req: Record<string, unknown> = {};
@@ -1207,7 +1252,11 @@ server.tool(
       if (!/^0x[0-9a-fA-F]*$/.test(bytecode)) {
         throw new Error("'bytecode' must be 0x-hex");
       }
-      const data = encodeDeployData({ abi, bytecode: bytecode as `0x${string}`, args: Array.isArray(args) ? args : [] });
+      const data = encodeDeployData({
+        abi,
+        bytecode: bytecode as `0x${string}`,
+        args: Array.isArray(args) ? args : [],
+      });
       return jsonResponse({ data });
     } catch (error) {
       return handleError(error);

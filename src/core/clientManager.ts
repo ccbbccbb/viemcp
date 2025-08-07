@@ -1,6 +1,13 @@
 import { createPublicClient, http } from "viem";
 import type { Chain } from "viem/chains";
-import { SUPPORTED_CHAINS, getRpcUrl, findChainByIdLocal, resolveChainById, registerChain, loadCustomChainsFromEnv } from "./chains.js";
+import {
+  SUPPORTED_CHAINS,
+  getRpcUrl,
+  findChainByIdLocal,
+  resolveChainById,
+  registerChain,
+  loadCustomChainsFromEnv,
+} from "./chains.js";
 
 export type SupportedChainName = string;
 
@@ -11,7 +18,9 @@ export class ClientManager {
     // Load custom chains from env once
     loadCustomChainsFromEnv();
     // default to mainnet
-    const chain: Chain | undefined = chainName ? SUPPORTED_CHAINS[chainName] : SUPPORTED_CHAINS["mainnet"];
+    const chain: Chain | undefined = chainName
+      ? SUPPORTED_CHAINS[chainName]
+      : SUPPORTED_CHAINS["mainnet"];
     if (!chain) {
       throw new Error(
         `Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`
@@ -49,5 +58,3 @@ export class ClientManager {
     return Object.keys(SUPPORTED_CHAINS);
   }
 }
-
-

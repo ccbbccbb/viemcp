@@ -7,11 +7,7 @@ export function jsonResponse(data: unknown) {
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify(
-          data,
-          (_k, v) => (typeof v === "bigint" ? v.toString() : v),
-          2
-        ),
+        text: JSON.stringify(data, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2),
       },
     ],
   };
@@ -27,5 +23,3 @@ export function handleError(error: unknown) {
     ],
   };
 }
-
-

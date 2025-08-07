@@ -12,10 +12,10 @@ export function registerEVMPrompts(server: McpServer) {
       title: "Generate viem code",
       description: "Consult viem GitHub docs resources to produce code and integration steps",
       // Cast due to SDK types expecting ZodType union
-      argsSchema: ({
+      argsSchema: {
         feature: z.string().describe("What you want to build with viem"),
         hints: z.string().optional().describe("Optional constraints or libraries to consider"),
-      } as unknown) as never,
+      } as unknown as never,
     },
     (({ feature, hints }: { feature: string; hints?: string }) => ({
       messages: [
@@ -43,10 +43,10 @@ export function registerEVMPrompts(server: McpServer) {
     {
       title: "Analyze transaction",
       description: "Analyze a transaction on a chain",
-      argsSchema: ({
+      argsSchema: {
         txHash: z.string().describe("Transaction hash to analyze"),
         chain: z.string().optional().describe("Network name (defaults to ethereum)"),
-      } as unknown) as never,
+      } as unknown as never,
     },
     (({ txHash, chain = "ethereum" }: { txHash: string; chain?: string }) => ({
       messages: [
@@ -67,10 +67,10 @@ export function registerEVMPrompts(server: McpServer) {
     {
       title: "Analyze address",
       description: "Analyze an address on a chain",
-      argsSchema: ({
+      argsSchema: {
         address: z.string().describe("Address to analyze"),
         chain: z.string().optional().describe("Network name (defaults to ethereum)"),
-      } as unknown) as never,
+      } as unknown as never,
     },
     (({ address, chain = "ethereum" }: { address: string; chain?: string }) => ({
       messages: [
@@ -91,9 +91,9 @@ export function registerEVMPrompts(server: McpServer) {
     {
       title: "Search viem docs",
       description: "Search the viem docs resources for a topic",
-      argsSchema: ({
+      argsSchema: {
         query: z.string().describe("Search query or topic"),
-      } as unknown) as never,
+      } as unknown as never,
     },
     (({ query }: { query: string }) => ({
       messages: [
@@ -110,4 +110,3 @@ export function registerEVMPrompts(server: McpServer) {
     })) as unknown as never
   );
 }
-
