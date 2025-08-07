@@ -1,4 +1,4 @@
-import type { Address, Hash, Chain } from "viem";
+import type { Address, Hash } from "viem";
 
 // Common validation schemas and types
 export interface ChainInfo {
@@ -46,9 +46,9 @@ export interface TransactionSummary {
 
 export interface ContractCall {
   address: Address;
-  abi: any[];
+  abi: unknown[];
   functionName: string;
-  args?: any[];
+  args?: unknown[];
 }
 
 export interface PreparedTransaction {

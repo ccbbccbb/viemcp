@@ -32,12 +32,12 @@ export function formatError(error: unknown): string {
 }
 
 export function handleToolError(error: unknown): {
-  content: Array<{ type: string; text: string }>;
+  content: Array<{ type: "text"; text: string }>;
 } {
   return {
     content: [
       {
-        type: "text",
+        type: "text" as const,
         text: `Error: ${formatError(error)}`,
       },
     ],

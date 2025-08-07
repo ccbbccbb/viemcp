@@ -31,15 +31,14 @@ export function formatTimestamp(timestamp: bigint): string {
   return date.toISOString();
 }
 
-export function jsonResponse(data: unknown): { content: Array<{ type: string; text: string }> } {
+export function jsonResponse(data: unknown): { content: Array<{ type: "text"; text: string }> } {
   return {
     content: [
       {
-        type: "text",
+        type: "text" as const,
         text: JSON.stringify(
           data,
-          (key, value) => (typeof value === "bigint" ? value.toString() : value),
-          null,
+          (_key, value) => (typeof value === "bigint" ? value.toString() : value),
           2
         ),
       },
@@ -47,11 +46,11 @@ export function jsonResponse(data: unknown): { content: Array<{ type: string; te
   };
 }
 
-export function textResponse(text: string): { content: Array<{ type: string; text: string }> } {
+export function textResponse(text: string): { content: Array<{ type: "text"; text: string }> } {
   return {
     content: [
       {
-        type: "text",
+        type: "text" as const,
         text,
       },
     ],
