@@ -21,6 +21,7 @@ import {
 import * as chains from "viem/chains";
 import { normalize } from "viem/ens";
 import { z } from "zod";
+import { registerEVMPrompts } from "./core/prompts.js";
 
 // Helper function to get RPC URL from environment based on provider preference
 function getRpcUrl(chainName: string): string | undefined {
@@ -453,25 +454,53 @@ server.tool(
 // ENS Tools
 server.tool(
   "resolveEnsAddress",
-  "Resolve ENS name to address",
+  "Resolve ENS name to address. Optionally include avatar and specific text records.",
   {
     type: "object",
     properties: {
-      name: {
-        type: "string",
-        description: "ENS name",
+      name: { type: "string", description: "ENS name (e.g., vitalik.eth)" },
+      chain: { type: "string", description: "Chain to use (defaults to ethereum)" },
+      includeAvatar: { type: "boolean", description: "If true, also return ENS avatar", default: false },
+      textKeys: {
+        type: "array",
+        description: "If provided, return these ENS text records (e.g., com.twitter, url)",
+        items: { type: "string" },
       },
     },
     required: ["name"],
   },
-  async ({ name }) => {
+  async ({ name, chain, includeAvatar, textKeys }) => {
     try {
-      const client = clientManager.getClient("ethereum");
-      const address = await client.getEnsAddress({
-        name: normalize(name),
-      });
+      const client = clientManager.getClient(chain ?? "ethereum");
+      const normalized = normalize(name);
 
-      return textResponse(address ? `${name} → ${address}` : `${name} not found`);
+      const address = await client.getEnsAddress({ name: normalized });
+
+      // Optionals
+      let avatar: string | null | undefined = undefined;
+      if (includeAvatar) {
+        avatar = await client.getEnsAvatar({ name: normalized }).catch(() => null);
+      }
+
+      let texts: Record<string, string | null> | undefined = undefined;
+      if (Array.isArray(textKeys) && textKeys.length > 0) {
+        texts = {};
+        for (const key of textKeys) {
+          // catch per-key to avoid failing the whole request
+          const value = await client
+            .getEnsText({ name: normalized, key })
+            .catch(() => null);
+          texts[key] = value as string | null;
+        }
+      }
+
+      return jsonResponse({
+        name: normalized,
+        chain: client.chain?.name ?? chain ?? "ethereum",
+        address: address ?? null,
+        avatar,
+        texts,
+      });
     } catch (error) {
       return handleError(error);
     }
@@ -1174,12 +1203,24 @@ server.tool(
         }
         req["data"] = data as `0x${string}`;
       }
-      if (value) req["value"] = toBigIntIf(value);
-      if (gas) req["gas"] = toBigIntIf(gas);
-      if (gasPrice) req["gasPrice"] = toBigIntIf(gasPrice);
-      if (maxFeePerGas) req["maxFeePerGas"] = toBigIntIf(maxFeePerGas);
-      if (maxPriorityFeePerGas) req["maxPriorityFeePerGas"] = toBigIntIf(maxPriorityFeePerGas);
-      if (nonce) req["nonce"] = Number(nonce);
+      if (value) {
+        req["value"] = toBigIntIf(value);
+      }
+      if (gas) {
+        req["gas"] = toBigIntIf(gas);
+      }
+      if (gasPrice) {
+        req["gasPrice"] = toBigIntIf(gasPrice);
+      }
+      if (maxFeePerGas) {
+        req["maxFeePerGas"] = toBigIntIf(maxFeePerGas);
+      }
+      if (maxPriorityFeePerGas) {
+        req["maxPriorityFeePerGas"] = toBigIntIf(maxPriorityFeePerGas);
+      }
+      if (nonce) {
+        req["nonce"] = Number(nonce);
+      }
 
       // Let viem fill defaults (e.g., gas, fees) via estimate / fee market if missing
       const prepared = await client.prepareTransactionRequest(req as never);
@@ -1353,6 +1394,9 @@ async function main() {
   const transport = new StdioServerTransport();
   // Register GitHub-based Viem docs resources before connecting
   await setupGithubDocsResources();
+
+  // Register prompts (moved to src/core/prompts.ts)
+  registerEVMPrompts(server);
   await server.connect(transport);
   console.error("viemcp started successfully");
 }

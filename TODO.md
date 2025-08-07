@@ -8,10 +8,10 @@
   - [x] getGasPrice
   - [x] estimateGas
   - [x] getChainId
-  - [x] getBalance (migrated from Tranche 0)
-  - [x] getBlockNumber (migrated from Tranche 0)
-  - [x] getTransaction (migrated from Tranche 0)
-  - [x] listSupportedChains (migrated from Tranche 0)
+  - [x] getBalance
+  - [x] getBlockNumber
+  - [x] getTransaction
+  - [x] listSupportedChains
 
 - [x] Tranche 2 — Contract operations
   - [x] simulateContract
@@ -19,105 +19,55 @@
   - [x] multicall
   - [x] getCode
   - [x] getStorageAt
-  - [x] readContract (migrated from Tranche 0)
+  - [x] readContract
 
 - [x] Tranche 3 — ERC20
   - [x] getERC20Metadata
   - [x] getERC20Allowance
-  - [x] getERC20Balance (migrated from Tranche 0)
+  - [x] getERC20Balance
 
 - [x] Tranche 4 — ENS
   - [x] getEnsName
   - [x] getEnsAvatar
   - [x] getEnsText
-  - [x] resolveEnsAddress (migrated from Tranche 0)
+  - [x] resolveEnsAddress (now supports `includeAvatar` and `textKeys`)
 
-- [x] Tranche 5 — Tx prep / encoding
+- [x] Tranche 5 — Tx prep / encoding & utilities
   - [x] prepareTransactionRequest
   - [x] encodeFunctionData
   - [x] encodeDeployData
-  - [x] parseEther (migrated from Tranche 0)
-  - [x] formatEther (migrated from Tranche 0)
-  - [x] isAddress (migrated from Tranche 0)
-  - [x] keccak256 (migrated from Tranche 0)
-
-## Overlap and Migration Notes (from Tranche 0)
-
-- getBalance → Tranche 1 (Public Actions: Account)
-- getBlockNumber → Tranche 1 (Public Actions: Block)
-- getTransaction → Tranche 1 (Public Actions: Transaction)
-- listSupportedChains → Tranche 1 (Discovery)
-- readContract → Tranche 2 (Contract)
-- getERC20Balance → Tranche 3 (ERC20)
-- resolveEnsAddress → Tranche 4 (ENS)
-- parseEther, formatEther, isAddress, keccak256 → Tranche 5 (Utilities)
-
-## Tranche 0 — Already Implemented Tools (not in Tranche 1 or later)
-
-- [x] getBalance
-  - Implementation: `clientManager.getClient(chain)` → `client.getBalance({ address })`
-  - Validation: `isAddress(address)`
-  - Output: formatted with `formatEther`, includes native symbol when available
-  - viem: `getBalance`, `formatEther`
-
-- [x] getBlockNumber
-  - Implementation: `client.getBlockNumber()`
-  - Output: stringified block number
-  - viem: `getBlockNumber`
-
-- [x] getTransaction
-  - Implementation: `client.getTransaction({ hash })`
-  - Validation: `^0x[0-9a-fA-F]{64}$` for `hash`
-  - Output: JSON with `hash, from, to, value (formatted), gasPrice, blockNumber`
-  - viem: `getTransaction`, `formatEther`
-
-- [x] readContract
-  - Implementation: `client.readContract({ address, abi, functionName, args })`
-  - Validation: `isAddress(address)`; ABI passed-through; args optional array
-  - Output: JSON `{ function, result }`
-  - viem: `readContract`
-
-- [x] getERC20Balance
-  - Implementation: ERC20 reads: `balanceOf(owner)`, `decimals()`, `symbol()` (fallback to "TOKEN")
-  - Validation: `isAddress(tokenAddress)`, `isAddress(ownerAddress)`
-  - Output: humanized balance using `decimals`
-  - viem: `erc20Abi`, `readContract`
-
-- [x] resolveEnsAddress
-  - Implementation: `client.getEnsAddress({ name: normalize(name) })` on `ethereum`
-  - Output: `name → address` or `not found`
-  - viem: `getEnsAddress`, `normalize`
-
-- [x] parseEther
-  - Implementation: `parseEther(value)`
-  - Output: `"<eth> ETH = <wei> wei"`
-  - viem: `parseEther`
-
-- [x] formatEther
-  - Implementation: `formatEther(BigInt(value))`
-  - Output: `"<wei> wei = <eth> ETH"`
-  - viem: `formatEther`
-
-- [x] isAddress
-  - Implementation: `isAddress(address)`
-  - Output: `Valid address` | `Invalid address`
-  - viem: `isAddress`
-
-- [x] keccak256
-  - Implementation: `keccak256(toHex(data))`
-  - Output: `Hash: 0x...`
-  - viem: `keccak256`, `toHex`
-
-- [x] listSupportedChains
-  - Implementation: enumerates internal `SUPPORTED_CHAINS` (viem chains + aliases)
-  - Output: JSON `{ name, chainId, displayName, nativeCurrency }[]`
-  - viem: `viem/chains` catalog (read at startup)
+  - [x] parseEther
+  - [x] formatEther
+  - [x] isAddress
+  - [x] keccak256
 
 ## Tools & Resources to Integrate
 
 IMPORTANT:
 - Resource: Exposing the way in which a developer should use Viem in their code
 - Tool: A function from Viem that an LLM can use to interact with blockchains
+
+## Prompts Plan
+
+- [ ] generate_viem_code
+  - Goal: Given a requested feature, read `viem://docs/github-index` and relevant `viem://docs/github/{path}` resources to propose correct viem code snippets and integration steps.
+  - Inputs: `{ feature: string, hints?: string }`
+  - Output: Stepwise codegen plan + code blocks + cited resource URIs
+
+- [ ] analyze_transaction
+  - Goal: Ask the model to analyze a transaction hash on a chain (structure aligned with evm-mcp-server prompt)
+  - Inputs: `{ txHash: string, chain?: string }`
+  - Output: Explanatory analysis text
+
+- [ ] analyze_address
+  - Goal: Ask the model to analyze an address on a chain (balance, nonce, activity overview)
+  - Inputs: `{ address: string, chain?: string }`
+  - Output: Explanatory analysis text
+
+- [ ] search_viem_docs
+  - Goal: Ask the model to search/browse our viem docs resources for a topic and summarize with links
+  - Inputs: `{ query: string }`
+  - Output: Summarized answer with `viem://docs/github/...` links
 
 ## Viem Documentation
 
