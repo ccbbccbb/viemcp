@@ -3,163 +3,16 @@
 import "dotenv/config";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  createPublicClient,
-  http,
-  type Address,
-  type Hash,
-  parseEther,
-  formatEther,
-  formatGwei,
-  erc20Abi,
-  isAddress,
-  keccak256,
-  toHex,
-  encodeFunctionData,
-  encodeDeployData,
-} from "viem";
-import * as chains from "viem/chains";
+import { type Address, type Hash, parseEther, formatEther, formatGwei, erc20Abi, isAddress, keccak256, toHex, encodeFunctionData, encodeDeployData } from "viem";
 import { normalize } from "viem/ens";
 import { z } from "zod";
 import { registerEVMPrompts } from "./core/prompts.js";
+import { ClientManager } from "./core/clientManager.js";
+import { setupGithubDocsResources } from "./core/resources/docs.js";
+import { jsonResponse, textResponse, handleError } from "./core/responses.js";
+import { SUPPORTED_CHAINS } from "./core/chains.js";
 
-// Helper function to get RPC URL from environment based on provider preference
-function getRpcUrl(chainName: string): string | undefined {
-  const provider = process.env["RPC_PROVIDER"] || "drpc";
-
-  // Try various environment variable formats
-  const envVariants = [
-    chainName.toUpperCase(),
-    chainName.toUpperCase().replace("-", "_"),
-    chainName.toUpperCase().replace(" ", "_"),
-    chainName
-      .replace(/([A-Z])/g, "_$1")
-      .toUpperCase()
-      .replace(/^_/, ""), // camelCase to SNAKE_CASE
-  ];
-
-  for (const variant of envVariants) {
-    // First try provider-specific URL
-    const providerUrl = process.env[`${variant}_RPC_URL_${provider.toUpperCase()}`];
-    if (providerUrl) {
-      return providerUrl;
-    }
-
-    // Fall back to generic URL
-    const genericUrl = process.env[`${variant}_RPC_URL`];
-    if (genericUrl) {
-      return genericUrl;
-    }
-  }
-
-  return undefined;
-}
-
-// Create chain name to viem chain mapping from all available chains
-const createChainMapping = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapping: Record<string, any> = {};
-
-  // Add all viem chains with their original names
-  Object.entries(chains).forEach(([key, chain]) => {
-    if (chain && typeof chain === "object" && "id" in chain && "name" in chain) {
-      // Add with original export name (camelCase)
-      mapping[key] = chain;
-
-      // Add with lowercase version
-      mapping[key.toLowerCase()] = chain;
-
-      // Add with kebab-case version
-      const kebabCase = key
-        .replace(/([A-Z])/g, "-$1")
-        .toLowerCase()
-        .replace(/^-/, "");
-      if (kebabCase !== key.toLowerCase()) {
-        mapping[kebabCase] = chain;
-      }
-
-      // Add common aliases
-      if (key === "mainnet") {
-        mapping["ethereum"] = chain;
-        mapping["eth"] = chain;
-      }
-      if (key === "bsc") {
-        mapping["bnb"] = chain;
-        mapping["binance"] = chain;
-      }
-      if (key === "avalanche") {
-        mapping["avax"] = chain;
-      }
-      if (key === "arbitrum") {
-        mapping["arb"] = chain;
-      }
-      if (key === "optimism") {
-        mapping["op"] = chain;
-      }
-      if (key === "polygon") {
-        mapping["matic"] = chain;
-      }
-      if (key === "fantom") {
-        mapping["ftm"] = chain;
-      }
-      if (key === "klaytn") {
-        mapping["kaia"] = chain;
-      }
-    }
-  });
-
-  return mapping;
-};
-
-const SUPPORTED_CHAINS = createChainMapping();
-
-type SupportedChainName = string;
-
-// Enhanced client manager with custom RPC support
-class ClientManager {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private clients: Map<number, any> = new Map();
-
-  getClient(chainName?: SupportedChainName) {
-    const chain = chainName ? SUPPORTED_CHAINS[chainName] : chains.mainnet;
-
-    if (!chain) {
-      throw new Error(
-        `Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`
-      );
-    }
-
-    if (!this.clients.has(chain.id)) {
-      // Try to get custom RPC URL from environment
-      const customRpcUrl = chainName ? getRpcUrl(chainName) : undefined;
-
-      const transport = customRpcUrl ? http(customRpcUrl) : http(); // Falls back to viem's default public RPC
-
-      this.clients.set(
-        chain.id,
-        createPublicClient({
-          chain,
-          transport,
-        })
-      );
-
-      if (customRpcUrl) {
-        console.error(`Using custom RPC for ${chainName}: ${customRpcUrl}`);
-      }
-    }
-
-    const client = this.clients.get(chain.id);
-    if (!client) {
-      throw new Error(`Client for chain ${chain.id} not found`);
-    }
-    return client;
-  }
-
-  // Get all supported chain names
-  getSupportedChains(): string[] {
-    return Object.keys(SUPPORTED_CHAINS);
-  }
-}
+// RPC URL resolution moved to core/chains.ts
 
 const clientManager = new ClientManager();
 
@@ -187,38 +40,7 @@ const server = new McpServer(
   }
 );
 
-// Helper functions
-function textResponse(text: string) {
-  return {
-    content: [{ type: "text" as const, text }],
-  };
-}
-
-function jsonResponse(data: unknown) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(
-          data,
-          (_key, value) => (typeof value === "bigint" ? value.toString() : value),
-          2
-        ),
-      },
-    ],
-  };
-}
-
-function handleError(error: unknown) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-      },
-    ],
-  };
-}
+// Helper functions moved to core/responses
 
 // Helper to stringify JSON with BigInt support (prefix underscore to avoid unused rule)
 function _toJsonString(data: unknown) {
@@ -1005,7 +827,7 @@ server.tool(
       const client = clientManager.getClient(chain);
       const value = await client.getStorageAt({
         address: address as Address,
-        slot: index,
+        slot: index as unknown as `0x${string}`,
         blockTag: blockTag as never,
       });
       return jsonResponse({ slot: input, value, address, chain: client.chain?.name });
@@ -1278,122 +1100,15 @@ server.tool(
     }
   }
 );
-// Dynamic GitHub Docs resources: recursively list MDX files in wevm/viem site/pages/docs and register each as a resource
-type GithubTreeEntry = { path: string; mode: string; type: "blob" | "tree"; sha: string; url: string };
+// Docs helpers moved to core/resources/docs.ts
 
-function getGithubHeaders(): Record<string, string> {
-  // Public access only (no token)
-  return {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "viemcp-mcp-server",
-  };
-}
-
-async function fetchViemDocsTree(): Promise<string[]> {
-  const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
-  const apiUrl = `https://api.github.com/repos/wevm/viem/git/trees/${branch}?recursive=1`;
-  const res = await fetch(apiUrl, { headers: getGithubHeaders() });
-  if (!res.ok) {
-    throw new Error(`GitHub tree fetch failed: ${res.status} ${res.statusText}`);
-  }
-  const data = (await res.json()) as { tree: GithubTreeEntry[] };
-  const base = "site/pages/docs/";
-  return data.tree
-    .filter((e) => e.type === "blob" && e.path.startsWith(base) && e.path.endsWith(".mdx"))
-    .map((e) => e.path.slice(base.length)); // relative path under docs/
-}
-
-function registerGithubDocResource(relativePath: string) {
-  // Use the relative path as the resource path; include extension for uniqueness
-  const uri = `viem://docs/github/${relativePath}`;
-  const name = `viem-doc-${relativePath.replace(/\//g, "-")}`;
-  server.registerResource(
-    name,
-    uri,
-    {
-      title: `Viem Docs (GitHub): ${relativePath}`,
-      description: `Live content from wevm/viem/site/pages/docs/${relativePath}`,
-      mimeType: "text/markdown",
-    },
-    async (url) => {
-      try {
-        const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
-        const rawUrl = `https://raw.githubusercontent.com/wevm/viem/${branch}/site/pages/docs/${relativePath}`;
-        const res = await fetch(rawUrl, { headers: { "User-Agent": "viemcp-mcp-server" } });
-        if (!res.ok) {
-          throw new Error(`GitHub raw fetch failed: ${res.status} ${res.statusText}`);
-        }
-        const text = await res.text();
-        return {
-          contents: [
-            {
-              uri: url.href,
-              mimeType: "text/markdown",
-              text,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          contents: [
-            {
-              uri: url.href,
-              mimeType: "text/plain",
-              text: `Error loading GitHub doc: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            },
-          ],
-        };
-      }
-    }
-  );
-}
-
-async function setupGithubDocsResources() {
-  try {
-    const mdxPaths = await fetchViemDocsTree();
-    // Index resource with a list of discovered URIs
-    const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
-    const indexTextLines = [
-      `Viem GitHub docs (branch: ${branch})`,
-      "",
-      "Discovered MDX files:",
-      ...mdxPaths.map((p) => `- viem://docs/github/${p}`),
-    ];
-    server.registerResource(
-      "viem-docs-github-index",
-      "viem://docs/github-index",
-      {
-        title: "Viem Docs (GitHub) Index",
-        description: "List of all Viem GitHub docs registered as resources",
-        mimeType: "text/markdown",
-      },
-      async (uri) => ({
-        contents: [
-          {
-            uri: uri.href,
-            mimeType: "text/markdown",
-            text: indexTextLines.join("\n"),
-          },
-        ],
-      })
-    );
-    // Register each doc resource
-    mdxPaths.forEach(registerGithubDocResource);
-  } catch (error) {
-    console.error(
-      "Failed to setup GitHub docs resources:",
-      error instanceof Error ? error.message : String(error)
-    );
-  }
-}
+// Docs resources moved to core/resources/docs.ts
 
 // Start server
 async function main() {
   const transport = new StdioServerTransport();
   // Register GitHub-based Viem docs resources before connecting
-  await setupGithubDocsResources();
+  await setupGithubDocsResources(server);
 
   // Register prompts (moved to src/core/prompts.ts)
   registerEVMPrompts(server);
