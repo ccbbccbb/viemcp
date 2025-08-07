@@ -25,25 +25,30 @@
   ],
   "type": "module",
   "bin": {
-    "viemcp": "./src/index.ts"
+    "viemcp": "./build/index.js"
   },
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
   "files": [
-    "src/",
+    "build/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "echo 'Using Bun runtime - no build needed'",
-    "start": "bun src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node build/index.js",
     "dev": "bun --watch src/index.ts",
-    "clean": "echo 'Using Bun runtime - no build artifacts to clean'",
+    "clean": "rm -rf build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "types": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "prepack": "bun run lint && bun run format:check",
+    "prepack": "bun run clean && bun run lint && bun run format:check && bun run typecheck && bun run build",
+    "prepublishOnly": "bun run prepack",
+    "release": "bun run prepack && bun publish --access public",
+    "release:dry": "bun run prepack && bun publish --dry-run",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

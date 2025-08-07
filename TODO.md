@@ -28,9 +28,7 @@
 
 - [x] Tranche 4 — ENS
   - [x] getEnsName
-  - [x] getEnsAvatar
-  - [x] getEnsText
-  - [x] resolveEnsAddress (now supports `includeAvatar` and `textKeys`)
+  - [x] resolveEnsAddress (now supports `includeAvatar` and `textKeys`; removed `getEnsAvatar` & `getEnsText`)
 
 - [x] Tranche 5 — Tx prep / encoding & utilities
   - [x] prepareTransactionRequest
@@ -70,6 +68,38 @@ IMPORTANT:
   - Output: Summarized answer with `viem://docs/github/...` links
 
 ## Viem Documentation
+## Additional Public Actions (Read-only)
+
+- [ ] getTransactionCount
+  - Implementation: `client.getTransactionCount({ address, blockTag? })`
+  - Validation: `isAddress(address)`; `blockTag` in [latest|pending|earliest] or number/hex
+  - Output: `{ address, nonce, chain }`
+  - viem: `getTransactionCount`
+
+- [ ] getBlockTransactionCount
+  - Implementation: `client.getBlockTransactionCount({ blockTag|blockNumber })`
+  - Validation: `numberOrTag` as tag or number/hex
+  - Output: `{ numberOrTag, count, chain }`
+  - viem: `getBlockTransactionCount`
+
+- [ ] getLogs
+  - Implementation: `client.getLogs({ address?, topics?, fromBlock?, toBlock? })`
+  - Validation: `isAddress(address)` if provided; block tags or numbers
+  - Output: `{ count, logs }`
+  - viem: `getLogs`
+
+- [ ] getFeeHistory
+  - Implementation: `client.getFeeHistory({ blockCount, newestBlock, rewardPercentiles? })`
+  - Validation: `blockCount` > 0; `newestBlock` tag or number; `rewardPercentiles` number[]
+  - Output: raw fee history JSON
+  - viem: `getFeeHistory`
+
+- [ ] getEnsResolver
+  - Implementation: `client.getEnsResolver({ name })`
+  - Validation: `name` string (normalized internally by viem)
+  - Output: `{ name, resolver }`
+  - viem: `getEnsResolver`
+
 
 Introduction
 - Why Viem

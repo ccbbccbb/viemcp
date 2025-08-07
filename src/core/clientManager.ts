@@ -1,16 +1,17 @@
 import { createPublicClient, http } from "viem";
-import { SUPPORTED_CHAINS, getRpcUrl } from "./chains.js";
+import type { Chain } from "viem/chains";
+import { SUPPORTED_CHAINS, getRpcUrl, findChainByIdLocal, resolveChainById, registerChain, loadCustomChainsFromEnv } from "./chains.js";
 
 export type SupportedChainName = string;
 
 export class ClientManager {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private clients: Map<number, any> = new Map();
+  private clients: Map<number, ReturnType<typeof createPublicClient>> = new Map();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getClient(chainName?: SupportedChainName): any {
+  getClient(chainName?: SupportedChainName) {
+    // Load custom chains from env once
+    loadCustomChainsFromEnv();
     // default to mainnet
-    const chain = chainName ? SUPPORTED_CHAINS[chainName] : SUPPORTED_CHAINS["mainnet"];
+    const chain: Chain | undefined = chainName ? SUPPORTED_CHAINS[chainName] : SUPPORTED_CHAINS["mainnet"];
     if (!chain) {
       throw new Error(
         `Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`
@@ -21,6 +22,18 @@ export class ClientManager {
       const transport = customRpcUrl ? http(customRpcUrl) : http();
       const client = createPublicClient({ chain, transport });
       this.clients.set(chain.id, client);
+      // Auto-detect chainId and register when unknown alias used
+      (async () => {
+        try {
+          const id = await client.getChainId();
+          const existing = findChainByIdLocal(id) || (await resolveChainById(id));
+          if (existing && !SUPPORTED_CHAINS[existing.name]) {
+            registerChain(existing);
+          }
+        } catch {
+          // ignore detection errors
+        }
+      })();
       if (customRpcUrl) {
         console.error(`Using custom RPC for ${chainName}: ${customRpcUrl}`);
       }

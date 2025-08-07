@@ -63,12 +63,27 @@ export async function setupGithubDocsResources(server: McpServer) {
   try {
     const mdxPaths = await fetchViemDocsTree();
     const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
-    const indexTextLines = [
-      `Viem GitHub docs (branch: ${branch})`,
-      "",
-      "Discovered MDX files:",
-      ...mdxPaths.map((p) => `- viem://docs/github/${p}`),
-    ];
+    // Group by top-level folder to mirror sections
+    const groups = new Map<string, string[]>();
+    for (const p of mdxPaths) {
+      const top = (p.split("/")[0] ?? "root");
+      const list = groups.get(top) ?? [] as string[];
+      list.push(p);
+      groups.set(top, list);
+    }
+    const indexTextLines = [`Viem GitHub docs (branch: ${branch})`, ""];
+    const folders: string[] = Array.from(groups.keys()).filter((x): x is string => typeof x === "string");
+    folders.sort();
+    for (const folder of folders) {
+      indexTextLines.push(`### ${folder}`);
+      const baseFiles: string[] = (groups.get(folder) ?? []).filter((x): x is string => typeof x === "string");
+      const files = baseFiles.slice();
+      files.sort();
+      for (const f of files) {
+        indexTextLines.push(`- viem://docs/github/${f}`);
+      }
+      indexTextLines.push("");
+    }
     server.registerResource(
       "viem-docs-github-index",
       "viem://docs/github-index",
