@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Logs
+*.log
+
+# Coverage output
+coverage/
+
+# Package files
+package-lock.json
+yarn.lock
+bun.lock
+
+# Generated files
+*.d.ts
+
+# Config files that should maintain their formatting
+*.json
+*.yaml
+*.yml
+
+# Markdown files (optional - remove if you want prettier to format markdown)
+*.md
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

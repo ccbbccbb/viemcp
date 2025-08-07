@@ -19,15 +19,15 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
         // ENS only works on mainnet
         const client = clientManager.getClient("ethereum");
         const normalizedName = normalize(name);
-        
+
         const address = await client.getEnsAddress({
           name: normalizedName,
         });
-        
+
         if (!address) {
           return textResponse(`ENS name "${name}" does not resolve to an address`);
         }
-        
+
         return textResponse(`${name} resolves to: ${address}`);
       } catch (error) {
         return handleToolError(error);
@@ -46,15 +46,15 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
       try {
         // ENS only works on mainnet
         const client = clientManager.getClient("ethereum");
-        
+
         const ensName = await client.getEnsName({
           address: address as Address,
         });
-        
+
         if (!ensName) {
           return textResponse(`Address ${address} does not have an ENS name`);
         }
-        
+
         return textResponse(`${address} resolves to: ${ensName}`);
       } catch (error) {
         return handleToolError(error);
@@ -74,15 +74,15 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
         // ENS only works on mainnet
         const client = clientManager.getClient("ethereum");
         const normalizedName = normalize(name);
-        
+
         const avatar = await client.getEnsAvatar({
           name: normalizedName,
         });
-        
+
         if (!avatar) {
           return textResponse(`No avatar set for ${name}`);
         }
-        
+
         return jsonResponse({
           name,
           avatar,
@@ -106,16 +106,16 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
         // ENS only works on mainnet
         const client = clientManager.getClient("ethereum");
         const normalizedName = normalize(name);
-        
+
         const text = await client.getEnsText({
           name: normalizedName,
           key,
         });
-        
+
         if (!text) {
           return textResponse(`No "${key}" text record for ${name}`);
         }
-        
+
         return jsonResponse({
           name,
           key,
@@ -139,15 +139,15 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
         // ENS only works on mainnet
         const client = clientManager.getClient("ethereum");
         const normalizedName = normalize(name);
-        
+
         const resolver = await client.getEnsResolver({
           name: normalizedName,
         });
-        
+
         if (!resolver) {
           return textResponse(`No resolver found for ${name}`);
         }
-        
+
         return jsonResponse({
           name,
           resolver,

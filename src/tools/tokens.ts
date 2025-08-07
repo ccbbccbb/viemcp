@@ -9,7 +9,10 @@ import { formatBalance, jsonResponse, textResponse } from "../utils/formatting.j
 // ERC1155 ABI subset
 const erc1155Abi = [
   {
-    inputs: [{ name: "account", type: "address" }, { name: "id", type: "uint256" }],
+    inputs: [
+      { name: "account", type: "address" },
+      { name: "id", type: "uint256" },
+    ],
     name: "balanceOf",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
@@ -37,7 +40,7 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, ownerAddress, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const [balance, decimals, symbol] = await Promise.all([
           client.readContract({
             address: tokenAddress as Address,
@@ -50,15 +53,17 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
             abi: erc20Abi,
             functionName: "decimals",
           }),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc20Abi,
-            functionName: "symbol",
-          }).catch(() => "TOKEN"), // Fallback if symbol fails
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc20Abi,
+              functionName: "symbol",
+            })
+            .catch(() => "TOKEN"), // Fallback if symbol fails
         ]);
-        
+
         const formatted = formatBalance(balance, Number(decimals), symbol);
-        
+
         return textResponse(
           `ERC20 balance for ${ownerAddress}: ${formatted} (${balance.toString()} raw)`
         );
@@ -79,30 +84,36 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const [name, symbol, decimals, totalSupply] = await Promise.all([
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc20Abi,
-            functionName: "name",
-          }).catch(() => "Unknown"),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc20Abi,
-            functionName: "symbol",
-          }).catch(() => "UNKNOWN"),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc20Abi,
+              functionName: "name",
+            })
+            .catch(() => "Unknown"),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc20Abi,
+              functionName: "symbol",
+            })
+            .catch(() => "UNKNOWN"),
           client.readContract({
             address: tokenAddress as Address,
             abi: erc20Abi,
             functionName: "decimals",
           }),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc20Abi,
-            functionName: "totalSupply",
-          }).catch(() => 0n),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc20Abi,
+              functionName: "totalSupply",
+            })
+            .catch(() => 0n),
         ]);
-        
+
         return jsonResponse({
           address: tokenAddress,
           name,
@@ -130,7 +141,7 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, owner, spender, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const [allowance, decimals, symbol] = await Promise.all([
           client.readContract({
             address: tokenAddress as Address,
@@ -143,18 +154,18 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
             abi: erc20Abi,
             functionName: "decimals",
           }),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc20Abi,
-            functionName: "symbol",
-          }).catch(() => "TOKEN"),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc20Abi,
+              functionName: "symbol",
+            })
+            .catch(() => "TOKEN"),
         ]);
-        
+
         const formatted = formatBalance(allowance, Number(decimals), symbol);
-        
-        return textResponse(
-          `Allowance from ${owner} to ${spender}: ${formatted}`
-        );
+
+        return textResponse(`Allowance from ${owner} to ${spender}: ${formatted}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -173,17 +184,15 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, tokenId, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const owner = await client.readContract({
           address: tokenAddress as Address,
           abi: erc721Abi,
           functionName: "ownerOf",
           args: [BigInt(tokenId)],
         });
-        
-        return textResponse(
-          `Owner of token #${tokenId}: ${owner}`
-        );
+
+        return textResponse(`Owner of token #${tokenId}: ${owner}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -202,17 +211,15 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, ownerAddress, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const balance = await client.readContract({
           address: tokenAddress as Address,
           abi: erc721Abi,
           functionName: "balanceOf",
           args: [ownerAddress as Address],
         });
-        
-        return textResponse(
-          `ERC721 balance for ${ownerAddress}: ${balance.toString()} NFTs`
-        );
+
+        return textResponse(`ERC721 balance for ${ownerAddress}: ${balance.toString()} NFTs`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -231,7 +238,7 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, tokenId, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const [tokenURI, name, symbol] = await Promise.all([
           client.readContract({
             address: tokenAddress as Address,
@@ -239,18 +246,22 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
             functionName: "tokenURI",
             args: [BigInt(tokenId)],
           }),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc721Abi,
-            functionName: "name",
-          }).catch(() => "Unknown"),
-          client.readContract({
-            address: tokenAddress as Address,
-            abi: erc721Abi,
-            functionName: "symbol",
-          }).catch(() => "UNKNOWN"),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc721Abi,
+              functionName: "name",
+            })
+            .catch(() => "Unknown"),
+          client
+            .readContract({
+              address: tokenAddress as Address,
+              abi: erc721Abi,
+              functionName: "symbol",
+            })
+            .catch(() => "UNKNOWN"),
         ]);
-        
+
         return jsonResponse({
           tokenId,
           tokenURI,
@@ -279,17 +290,15 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, tokenId, ownerAddress, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const balance = await client.readContract({
           address: tokenAddress as Address,
           abi: erc1155Abi,
           functionName: "balanceOf",
           args: [ownerAddress as Address, BigInt(tokenId)],
         });
-        
-        return textResponse(
-          `ERC1155 balance for token #${tokenId}: ${balance.toString()}`
-        );
+
+        return textResponse(`ERC1155 balance for token #${tokenId}: ${balance.toString()}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -308,14 +317,14 @@ export function registerTokenTools(server: McpServer, clientManager: ClientManag
     async ({ tokenAddress, tokenId, chainId }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
+
         const uri = await client.readContract({
           address: tokenAddress as Address,
           abi: erc1155Abi,
           functionName: "uri",
           args: [BigInt(tokenId)],
         });
-        
+
         return jsonResponse({
           tokenId,
           uri,

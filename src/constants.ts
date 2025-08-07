@@ -43,7 +43,7 @@ export const COMMON_ABIS = {
       inputs: [],
       name: "decimals",
       outputs: [{ name: "", type: "uint8" }],
-      stateMutability: "view", 
+      stateMutability: "view",
       type: "function",
     },
     {
@@ -55,7 +55,7 @@ export const COMMON_ABIS = {
     },
     {
       inputs: [],
-      name: "symbol", 
+      name: "symbol",
       outputs: [{ name: "", type: "string" }],
       stateMutability: "view",
       type: "function",
@@ -78,7 +78,7 @@ export const COMMON_ABIS = {
     },
     {
       inputs: [{ name: "tokenId", type: "uint256" }],
-      name: "tokenURI", 
+      name: "tokenURI",
       outputs: [{ name: "", type: "string" }],
       stateMutability: "view",
       type: "function",

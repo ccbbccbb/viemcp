@@ -1,20 +1,13 @@
 import { z } from "zod";
 import { isAddress } from "viem";
 
-export const AddressSchema = z.string().refine(
-  (val) => isAddress(val),
-  { message: "Invalid Ethereum address" }
-);
+export const AddressSchema = z
+  .string()
+  .refine((val) => isAddress(val), { message: "Invalid Ethereum address" });
 
-export const HashSchema = z.string().regex(
-  /^0x[a-fA-F0-9]{64}$/,
-  "Invalid transaction hash"
-);
+export const HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash");
 
-export const HexSchema = z.string().regex(
-  /^0x[a-fA-F0-9]*$/,
-  "Invalid hex string"
-);
+export const HexSchema = z.string().regex(/^0x[a-fA-F0-9]*$/, "Invalid hex string");
 
 export const ChainIdSchema = z.number().positive();
 
@@ -35,18 +28,9 @@ export const ChainNameSchema = z.enum([
   "mumbai",
 ]);
 
-export const BlockTagSchema = z.enum([
-  "latest",
-  "earliest",
-  "pending",
-  "safe",
-  "finalized",
-]);
+export const BlockTagSchema = z.enum(["latest", "earliest", "pending", "safe", "finalized"]);
 
-export const BlockNumberSchema = z.union([
-  z.number().nonnegative(),
-  BlockTagSchema,
-]);
+export const BlockNumberSchema = z.union([z.number().nonnegative(), BlockTagSchema]);
 
 export function validateAddress(address: unknown): string {
   const result = AddressSchema.safeParse(address);

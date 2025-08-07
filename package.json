@@ -1,32 +1,70 @@
 {
   "name": "viemcp",
   "version": "0.0.1",
-  "private": true,
-  "packageManager": "bun@1.2.19",
-  "engines": {
-    "node": ">=20.0.0",
-    "bun": ">=1.2.19"
+  "description": "A Model Context Protocol server for blockchain interactions using viem",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "blockchain",
+    "ethereum",
+    "viem",
+    "evm"
+  ],
+  "homepage": "https://github.com/ccbbccbb/viemcp#readme",
+  "bugs": {
+    "url": "https://github.com/ccbbccbb/viemcp/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/viemcp.git"
+  },
+  "license": "MIT",
+  "author": "charchar <char@automatethestack.com>",
+  "contributors": [
+    "charchar <char@automatethestack.com>"
+  ],
   "type": "module",
   "bin": {
     "viemcp": "./build/index.js"
   },
+  "files": [
+    "build/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "dev": "bun --watch src/index.ts",
+    "clean": "rm -rf build/",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run clean && bun run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "files": ["build"],
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.2.19"
+  },
+  "packageManager": "bun@1.2.19",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
-    "zod": "^4.0.15",
+    "dotenv": "^17.2.1",
     "viem": "^2.33.0",
-    "dotenv": "^17.2.1"
+    "zod": "^4.0.15"
   },
   "devDependencies": {
-    "eslint": "^9.32.0",
-    "prettier": "^3.6.2",
+    "@eslint/js": "^9.32.0",
     "@types/bun": "^1.2.19",
     "@types/node": "^24.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "eslint": "^9.32.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   }
 }

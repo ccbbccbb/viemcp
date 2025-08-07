@@ -29,7 +29,7 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           args: args || [],
           blockNumber: typeof blockNumber === "number" ? BigInt(blockNumber) : blockNumber,
         });
-        
+
         return jsonResponse({
           function: functionName,
           result,
@@ -66,7 +66,7 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           account: account as Address | undefined,
           value: value ? BigInt(value) : undefined,
         });
-        
+
         return jsonResponse({
           function: functionName,
           result: result.result,
@@ -106,10 +106,8 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           account: account as Address | undefined,
           value: value ? BigInt(value) : undefined,
         });
-        
-        return textResponse(
-          `Estimated gas for ${functionName}(): ${gas.toString()} units`
-        );
+
+        return textResponse(`Estimated gas for ${functionName}(): ${gas.toString()} units`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -121,21 +119,24 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
     "multicall",
     "Batch multiple contract calls into a single request",
     {
-      contracts: z.array(z.object({
-        address: AddressSchema.describe("Contract address"),
-        abi: z.array(z.any()).describe("Contract ABI"),
-        functionName: z.string().describe("Function name"),
-        args: z.array(z.any()).optional().describe("Function arguments"),
-      })).describe("Array of contract calls"),
+      contracts: z
+        .array(
+          z.object({
+            address: AddressSchema.describe("Contract address"),
+            abi: z.array(z.any()).describe("Contract ABI"),
+            functionName: z.string().describe("Function name"),
+            args: z.array(z.any()).optional().describe("Function arguments"),
+          })
+        )
+        .describe("Array of contract calls"),
       chainId: ChainNameSchema.optional().describe("Chain to query"),
-      allowFailure: z.boolean().optional().default(true)
-        .describe("Allow individual calls to fail"),
+      allowFailure: z.boolean().optional().default(true).describe("Allow individual calls to fail"),
     },
     async ({ contracts, chainId, allowFailure }) => {
       try {
         const client = clientManager.getClient(chainId);
         const results = await client.multicall({
-          contracts: contracts.map(c => ({
+          contracts: contracts.map((c) => ({
             address: c.address as Address,
             abi: c.abi as Abi,
             functionName: c.functionName,
@@ -143,7 +144,7 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           })),
           allowFailure,
         });
-        
+
         return jsonResponse({
           results: results.map((result, index) => ({
             contract: contracts[index]?.address,
@@ -174,11 +175,11 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           address: address as Address,
           blockNumber: typeof blockNumber === "number" ? BigInt(blockNumber) : blockNumber,
         });
-        
+
         if (!code || code === "0x") {
           return textResponse(`No contract found at address ${address}`);
         }
-        
+
         return jsonResponse({
           address,
           hasCode: true,
@@ -204,16 +205,17 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
     async ({ address, slot, chainId, blockNumber }) => {
       try {
         const client = clientManager.getClient(chainId);
-        const slotHex = typeof slot === "number" 
-          ? `0x${slot.toString(16).padStart(64, "0")}` as `0x${string}`
-          : slot as `0x${string}`;
-        
+        const slotHex =
+          typeof slot === "number"
+            ? (`0x${slot.toString(16).padStart(64, "0")}` as `0x${string}`)
+            : (slot as `0x${string}`);
+
         const value = await client.getStorageAt({
           address: address as Address,
           slot: slotHex,
           blockNumber: typeof blockNumber === "number" ? BigInt(blockNumber) : blockNumber,
         });
-        
+
         return jsonResponse({
           address,
           slot: slotHex,
@@ -241,7 +243,7 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           functionName,
           args: args || [],
         });
-        
+
         return jsonResponse({
           functionName,
           encodedData: data,
@@ -269,7 +271,7 @@ export function registerContractTools(server: McpServer, clientManager: ClientMa
           functionName,
           data: data as `0x${string}`,
         });
-        
+
         return jsonResponse({
           functionName,
           decodedResult: result,

@@ -2,19 +2,19 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { type Address, type Hash } from "viem";
 import { ClientManager } from "../clients/manager.js";
-import { 
-  AddressSchema, 
-  HashSchema, 
+import {
+  AddressSchema,
+  HashSchema,
   ChainNameSchema,
-  BlockNumberSchema 
+  BlockNumberSchema,
 } from "../utils/validation.js";
 import { handleToolError } from "../utils/errors.js";
-import { 
-  formatBalance, 
-  formatGasPrice, 
+import {
+  formatBalance,
+  formatGasPrice,
   formatTimestamp,
   jsonResponse,
-  textResponse 
+  textResponse,
 } from "../utils/formatting.js";
 
 export function registerBlockchainTools(server: McpServer, clientManager: ClientManager) {
@@ -34,13 +34,11 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
           address: address as Address,
           blockNumber: typeof blockNumber === "number" ? BigInt(blockNumber) : blockNumber,
         });
-        
+
         const chain = chainId ? client.chain : clientManager.getCurrentChain();
         const formatted = formatBalance(balance, 18, chain?.nativeCurrency?.symbol);
-        
-        return textResponse(
-          `Balance for ${address} on ${chain?.name}: ${formatted}`
-        );
+
+        return textResponse(`Balance for ${address} on ${chain?.name}: ${formatted}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -59,10 +57,8 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const client = clientManager.getClient(chainId);
         const blockNumber = await client.getBlockNumber();
         const chain = chainId ? client.chain : clientManager.getCurrentChain();
-        
-        return textResponse(
-          `Current block number on ${chain?.name}: ${blockNumber.toString()}`
-        );
+
+        return textResponse(`Current block number on ${chain?.name}: ${blockNumber.toString()}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -74,33 +70,39 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
     "getBlock",
     "Get block information by number or hash",
     {
-      blockIdentifier: z.union([
-        z.number().describe("Block number"),
-        HashSchema.describe("Block hash"),
-        z.literal("latest"),
-        z.literal("pending"),
-        z.literal("safe"),
-        z.literal("finalized"),
-      ]).describe("Block number, hash, or tag"),
+      blockIdentifier: z
+        .union([
+          z.number().describe("Block number"),
+          HashSchema.describe("Block hash"),
+          z.literal("latest"),
+          z.literal("pending"),
+          z.literal("safe"),
+          z.literal("finalized"),
+        ])
+        .describe("Block number, hash, or tag"),
       chainId: ChainNameSchema.optional().describe("Chain to query"),
-      includeTransactions: z.boolean().optional().default(false)
+      includeTransactions: z
+        .boolean()
+        .optional()
+        .default(false)
         .describe("Include full transaction details"),
     },
     async ({ blockIdentifier, chainId, includeTransactions }) => {
       try {
         const client = clientManager.getClient(chainId);
-        
-        const blockParams = typeof blockIdentifier === "string" && blockIdentifier.startsWith("0x")
-          ? { blockHash: blockIdentifier as Hash }
-          : typeof blockIdentifier === "number"
-          ? { blockNumber: BigInt(blockIdentifier) }
-          : { blockTag: blockIdentifier };
-        
+
+        const blockParams =
+          typeof blockIdentifier === "string" && blockIdentifier.startsWith("0x")
+            ? { blockHash: blockIdentifier as Hash }
+            : typeof blockIdentifier === "number"
+              ? { blockNumber: BigInt(blockIdentifier) }
+              : { blockTag: blockIdentifier };
+
         const block = await client.getBlock({
           ...blockParams,
           includeTransactions,
         });
-        
+
         return jsonResponse({
           number: block.number?.toString(),
           hash: block.hash,
@@ -133,7 +135,7 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const transaction = await client.getTransaction({
           hash: hash as Hash,
         });
-        
+
         return jsonResponse({
           hash: transaction.hash,
           from: transaction.from,
@@ -142,7 +144,9 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
           gas: transaction.gas?.toString(),
           gasPrice: transaction.gasPrice ? formatGasPrice(transaction.gasPrice) : null,
           maxFeePerGas: transaction.maxFeePerGas ? formatGasPrice(transaction.maxFeePerGas) : null,
-          maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? formatGasPrice(transaction.maxPriorityFeePerGas) : null,
+          maxPriorityFeePerGas: transaction.maxPriorityFeePerGas
+            ? formatGasPrice(transaction.maxPriorityFeePerGas)
+            : null,
           nonce: transaction.nonce,
           blockNumber: transaction.blockNumber?.toString(),
           blockHash: transaction.blockHash,
@@ -169,19 +173,21 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const receipt = await client.getTransactionReceipt({
           hash: hash as Hash,
         });
-        
+
         return jsonResponse({
           transactionHash: receipt.transactionHash,
           status: receipt.status === "success" ? "success" : "failed",
           blockNumber: receipt.blockNumber.toString(),
           blockHash: receipt.blockHash,
           gasUsed: receipt.gasUsed.toString(),
-          effectiveGasPrice: receipt.effectiveGasPrice ? formatGasPrice(receipt.effectiveGasPrice) : null,
+          effectiveGasPrice: receipt.effectiveGasPrice
+            ? formatGasPrice(receipt.effectiveGasPrice)
+            : null,
           from: receipt.from,
           to: receipt.to,
           contractAddress: receipt.contractAddress,
           logsCount: receipt.logs.length,
-          logs: receipt.logs.map(log => ({
+          logs: receipt.logs.map((log) => ({
             address: log.address,
             topics: log.topics,
             data: log.data,
@@ -207,10 +213,8 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const client = clientManager.getClient(chainId);
         const gasPrice = await client.getGasPrice();
         const chain = chainId ? client.chain : clientManager.getCurrentChain();
-        
-        return textResponse(
-          `Current gas price on ${chain?.name}: ${formatGasPrice(gasPrice)}`
-        );
+
+        return textResponse(`Current gas price on ${chain?.name}: ${formatGasPrice(gasPrice)}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -233,10 +237,8 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
           address: address as Address,
           blockNumber: typeof blockNumber === "number" ? BigInt(blockNumber) : blockNumber,
         });
-        
-        return textResponse(
-          `Transaction count for ${address}: ${count}`
-        );
+
+        return textResponse(`Transaction count for ${address}: ${count}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -255,10 +257,8 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
         const client = clientManager.getClient(chainId);
         const id = await client.getChainId();
         const chain = chainId ? client.chain : clientManager.getCurrentChain();
-        
-        return textResponse(
-          `Chain ID for ${chain?.name}: ${id}`
-        );
+
+        return textResponse(`Chain ID for ${chain?.name}: ${id}`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -285,10 +285,8 @@ export function registerBlockchainTools(server: McpServer, clientManager: Client
           value: value ? BigInt(value) : undefined,
           data: data as `0x${string}` | undefined,
         });
-        
-        return textResponse(
-          `Estimated gas: ${gas.toString()} units`
-        );
+
+        return textResponse(`Estimated gas: ${gas.toString()} units`);
       } catch (error) {
         return handleToolError(error);
       }

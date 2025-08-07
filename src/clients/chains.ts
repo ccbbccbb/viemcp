@@ -40,11 +40,12 @@ export function getChainByName(chainName: string): Chain | undefined {
 }
 
 export function getChainById(chainId: number): Chain | undefined {
-  return Object.values(SUPPORTED_CHAINS).find(chain => chain.id === chainId);
+  return Object.values(SUPPORTED_CHAINS).find((chain) => chain.id === chainId);
 }
 
 export function getDefaultChain(): Chain {
-  const defaultChainId = process.env["DEFAULT_CHAIN_ID"] ? 
-    parseInt(process.env["DEFAULT_CHAIN_ID"]) : 1;
+  const defaultChainId = process.env["DEFAULT_CHAIN_ID"]
+    ? parseInt(process.env["DEFAULT_CHAIN_ID"])
+    : 1;
   return getChainById(defaultChainId) || mainnet;
 }

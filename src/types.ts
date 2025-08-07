@@ -41,7 +41,7 @@ export interface TransactionSummary {
   gasPrice?: string;
   blockNumber?: string;
   blockHash?: Hash;
-  status?: 'success' | 'reverted' | 'pending';
+  status?: "success" | "reverted" | "pending";
 }
 
 export interface ContractCall {

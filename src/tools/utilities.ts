@@ -63,9 +63,7 @@ export function registerUtilityTools(server: McpServer) {
     async ({ value, decimals }) => {
       try {
         const parsed = parseUnits(value, decimals);
-        return textResponse(
-          `${value} (${decimals} decimals) = ${parsed.toString()} units`
-        );
+        return textResponse(`${value} (${decimals} decimals) = ${parsed.toString()} units`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -83,9 +81,7 @@ export function registerUtilityTools(server: McpServer) {
     async ({ value, decimals }) => {
       try {
         const formatted = formatUnits(BigInt(value), decimals);
-        return textResponse(
-          `${value} units = ${formatted} (${decimals} decimals)`
-        );
+        return textResponse(`${value} units = ${formatted} (${decimals} decimals)`);
       } catch (error) {
         return handleToolError(error);
       }
@@ -103,7 +99,7 @@ export function registerUtilityTools(server: McpServer) {
       try {
         const valid = isAddress(address);
         return textResponse(
-          valid 
+          valid
             ? `✓ ${address} is a valid Ethereum address`
             : `✗ ${address} is NOT a valid Ethereum address`
         );
@@ -140,15 +136,12 @@ export function registerUtilityTools(server: McpServer) {
     "Calculate Keccak256 hash of data",
     {
       data: z.string().describe("Data to hash (hex string or UTF-8 text)"),
-      encoding: z.enum(["hex", "utf8"]).optional().default("hex")
-        .describe("Input encoding"),
+      encoding: z.enum(["hex", "utf8"]).optional().default("hex").describe("Input encoding"),
     },
     async ({ data, encoding }) => {
       try {
-        const input = encoding === "utf8" 
-          ? toHex(data)
-          : data as `0x${string}`;
-        
+        const input = encoding === "utf8" ? toHex(data) : (data as `0x${string}`);
+
         const hash = keccak256(input);
         return jsonResponse({
           input: data,
@@ -166,18 +159,16 @@ export function registerUtilityTools(server: McpServer) {
     "toHex",
     "Convert various types to hex string",
     {
-      value: z.union([
-        z.string(),
-        z.number(),
-        z.boolean(),
-      ]).describe("Value to convert"),
-      type: z.enum(["string", "number", "bigint", "boolean"]).optional()
+      value: z.union([z.string(), z.number(), z.boolean()]).describe("Value to convert"),
+      type: z
+        .enum(["string", "number", "bigint", "boolean"])
+        .optional()
         .describe("Type of the value"),
     },
     async ({ value, type }) => {
       try {
         let hex: string;
-        
+
         if (type === "number" || typeof value === "number") {
           hex = toHex(value as number);
         } else if (type === "bigint") {
@@ -187,7 +178,7 @@ export function registerUtilityTools(server: McpServer) {
         } else {
           hex = toHex(value as string);
         }
-        
+
         return textResponse(`Hex: ${hex}`);
       } catch (error) {
         return handleToolError(error);
@@ -201,8 +192,7 @@ export function registerUtilityTools(server: McpServer) {
     "Convert hex string to various types",
     {
       hex: z.string().describe("Hex string to convert"),
-      to: z.enum(["string", "number", "bigint", "boolean"])
-        .describe("Target type"),
+      to: z.enum(["string", "number", "bigint", "boolean"]).describe("Target type"),
     },
     async ({ hex, to }) => {
       try {
@@ -247,12 +237,11 @@ export function registerUtilityTools(server: McpServer) {
     {
       hex: z.string().describe("Hex string to pad"),
       size: z.number().describe("Target size in bytes"),
-      direction: z.enum(["left", "right"]).optional().default("left")
-        .describe("Padding direction"),
+      direction: z.enum(["left", "right"]).optional().default("left").describe("Padding direction"),
     },
     async ({ hex, size, direction }) => {
       try {
-        const padded = pad(hex as `0x${string}`, { 
+        const padded = pad(hex as `0x${string}`, {
           size: size as any,
           dir: direction,
         });

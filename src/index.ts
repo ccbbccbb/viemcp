@@ -17,15 +17,7 @@ import {
   keccak256,
   toHex,
 } from "viem";
-import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
-  sepolia,
-  polygonMumbai,
-} from "viem/chains";
+import { mainnet, polygon, optimism, arbitrum, base, sepolia, polygonMumbai } from "viem/chains";
 import { normalize } from "viem/ens";
 import { z } from "zod";
 
@@ -49,10 +41,13 @@ class ClientManager {
   getClient(chainName?: SupportedChainName) {
     const chain = chainName ? SUPPORTED_CHAINS[chainName] : mainnet;
     if (!this.clients.has(chain.id)) {
-      this.clients.set(chain.id, createPublicClient({
-        chain,
-        transport: http(),
-      }));
+      this.clients.set(
+        chain.id,
+        createPublicClient({
+          chain,
+          transport: http(),
+        })
+      );
     }
     return this.clients.get(chain.id)!;
   }
@@ -67,7 +62,7 @@ const AddressSchema = z.string().refine((val) => isAddress(val), {
 const HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid hash");
 const ChainNameSchema = z.enum([
   "ethereum",
-  "polygon", 
+  "polygon",
   "optimism",
   "arbitrum",
   "base",
@@ -100,8 +95,12 @@ function jsonResponse(data: unknown) {
     content: [
       {
         type: "text",
-        text: JSON.stringify(data, (key, value) =>
-          typeof value === "bigint" ? value.toString() : value, null, 2),
+        text: JSON.stringify(
+          data,
+          (key, value) => (typeof value === "bigint" ? value.toString() : value),
+          null,
+          2
+        ),
       },
     ],
   };
@@ -132,10 +131,8 @@ server.tool(
       const balance = await client.getBalance({
         address: address as Address,
       });
-      
-      return textResponse(
-        `Balance: ${formatEther(balance)} ${client.chain.nativeCurrency.symbol}`
-      );
+
+      return textResponse(`Balance: ${formatEther(balance)} ${client.chain.nativeCurrency.symbol}`);
     } catch (error) {
       return handleError(error);
     }
@@ -152,7 +149,7 @@ server.tool(
     try {
       const client = clientManager.getClient(chain);
       const blockNumber = await client.getBlockNumber();
-      
+
       return textResponse(`Block number: ${blockNumber.toString()}`);
     } catch (error) {
       return handleError(error);
@@ -171,7 +168,7 @@ server.tool(
     try {
       const client = clientManager.getClient(chain);
       const tx = await client.getTransaction({ hash: hash as Hash });
-      
+
       return jsonResponse({
         hash: tx.hash,
         from: tx.from,
@@ -206,7 +203,7 @@ server.tool(
         functionName,
         args: args || [],
       });
-      
+
       return jsonResponse({ function: functionName, result });
     } catch (error) {
       return handleError(error);
@@ -226,7 +223,7 @@ server.tool(
   async ({ tokenAddress, ownerAddress, chain }) => {
     try {
       const client = clientManager.getClient(chain);
-      
+
       const [balance, decimals, symbol] = await Promise.all([
         client.readContract({
           address: tokenAddress as Address,
@@ -239,15 +236,17 @@ server.tool(
           abi: erc20Abi,
           functionName: "decimals",
         }),
-        client.readContract({
-          address: tokenAddress as Address,
-          abi: erc20Abi,
-          functionName: "symbol",
-        }).catch(() => "TOKEN"),
+        client
+          .readContract({
+            address: tokenAddress as Address,
+            abi: erc20Abi,
+            functionName: "symbol",
+          })
+          .catch(() => "TOKEN"),
       ]);
-      
+
       const formatted = Number(balance) / Math.pow(10, Number(decimals));
-      
+
       return textResponse(`Balance: ${formatted} ${symbol}`);
     } catch (error) {
       return handleError(error);
@@ -268,10 +267,8 @@ server.tool(
       const address = await client.getEnsAddress({
         name: normalize(name),
       });
-      
-      return textResponse(
-        address ? `${name} → ${address}` : `${name} not found`
-      );
+
+      return textResponse(address ? `${name} → ${address}` : `${name} not found`);
     } catch (error) {
       return handleError(error);
     }
@@ -344,21 +341,16 @@ server.tool(
 );
 
 // Multi-chain Tools
-server.tool(
-  "listSupportedChains",
-  "List supported chains",
-  {},
-  async () => {
-    const chains = Object.entries(SUPPORTED_CHAINS).map(([name, chain]) => ({
-      name,
-      chainId: chain.id,
-      displayName: chain.name,
-      nativeCurrency: chain.nativeCurrency.symbol,
-    }));
-    
-    return jsonResponse({ supportedChains: chains });
-  }
-);
+server.tool("listSupportedChains", "List supported chains", {}, async () => {
+  const chains = Object.entries(SUPPORTED_CHAINS).map(([name, chain]) => ({
+    name,
+    chainId: chain.id,
+    displayName: chain.name,
+    nativeCurrency: chain.nativeCurrency.symbol,
+  }));
+
+  return jsonResponse({ supportedChains: chains });
+});
 
 // Start server
 async function main() {

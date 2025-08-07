@@ -13,7 +13,7 @@ export function formatError(error: unknown): string {
   if (error instanceof ViemcpError) {
     return `${error.message}${error.code ? ` (${error.code})` : ""}`;
   }
-  
+
   if (error instanceof Error) {
     // Handle viem specific errors
     if (error.message.includes("reverted")) {
@@ -27,11 +27,13 @@ export function formatError(error: unknown): string {
     }
     return error.message;
   }
-  
+
   return String(error);
 }
 
-export function handleToolError(error: unknown): { content: Array<{ type: string; text: string }> } {
+export function handleToolError(error: unknown): {
+  content: Array<{ type: string; text: string }>;
+} {
   return {
     content: [
       {
