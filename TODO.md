@@ -1,0 +1,334 @@
+# TODO
+
+## Tools & Resources to Integrate
+
+IMPORTANT:
+- Resource: Exposing the way in which a developer should use Viem in their code
+- Tool: A function from Viem that an LLM can use to interact with blockchains
+
+## Viem Documentation
+
+Introduction
+- Why Viem
+- Installation
+- Getting Started
+- Platform Compatibility
+- FAQ
+
+Guides
+- Migration Guide
+- Ethers v5 → viem
+- TypeScript
+- Error Handling
+- EIP-7702
+  -- Overview
+  -- Contract Writes
+  -- Sending Transactions
+- Blob Transactions
+
+Clients & Transports
+- Introduction
+- Public Client
+- Wallet Client
+- Test Client
+- Build your own Client
+- Transports
+  -- HTTP
+  -- WebSocket
+  -- Custom (EIP-1193)
+  -- IPC
+  -- Fallback
+
+Public Actions
+- Introduction
+- Access List
+  -- createAccessList
+- Account
+  -- getBalance
+  -- getTransactionCount
+- Block
+  -- getBlock
+  -- getBlockNumber
+  -- getBlockTransactionCount
+  -- simulateBlocks
+  -- watchBlockNumber
+  -- watchBlocks
+- Calls
+  -- call
+  -- simulateCalls
+- Chain
+  -- getChainId
+- EIP-712
+  -- getEip712Domain
+- Fee
+  -- estimateFeesPerGas
+  -- estimateGas
+  -- estimateMaxPriorityFeePerGas
+  -- getBlobBaseFee
+  -- getFeeHistory
+  -- getGasPrice
+- Filters & Logs
+  -- createBlockFilter
+  -- createEventFilter
+  -- createPendingTransactionFilter
+  -- getFilterChanges
+  -- getFilterLogs
+  -- getLogs
+  -- watchEvent
+  -- uninstallFilter
+- Proof
+  -- getProof
+- Signature
+  -- verifyMessage
+  -- verifyTypedData
+- Transaction
+  -- prepareTransactionRequest
+  -- getTransaction
+  -- getTransactionConfirmations
+  -- getTransactionReceipt
+  -- sendRawTransaction
+  -- waitForTransactionReceipt
+  -- watchPendingTransactions
+
+Wallet Actions
+  - Introduction
+  - Account
+  -- getAddresses
+  -- requestAddresses
+- Assets
+  -- watchAsset
+- Call Bundles (EIP-5792)
+  -- getCallsStatus
+  -- getCapabilities
+  -- sendCalls
+  -- showCallsStatus
+  -- waitForCallsStatus
+- Chain
+  -- addChain
+  -- switchChain
+- Data
+  -- signMessage
+  -- signTypedData
+- Permissions
+  -- getPermissions
+  -- requestPermissions
+- Transaction
+  -- prepareTransactionRequest
+  -- sendRawTransaction
+  -- sendTransaction
+  -- signTransaction
+
+Test Actions
+  - Introduction
+  - Account
+  -- impersonateAccount
+  -- setBalance
+  -- setCode
+  -- setNonce
+  -- setStorageAt
+  -- stopImpersonatingAccount
+- Block
+  -- getAutomine
+  -- increaseTime
+  -- mine
+  -- removeBlockTimestampInterval
+  -- setAutomine
+  -- setIntervalMining
+  -- setBlockTimestampInterval
+  -- setBlockGasLimit
+  -- setNextBlockBaseFeePerGas
+  -- setNextBlockTimestamp
+- Node
+  -- setCoinbase
+  -- setMinGasPrice
+- Settings
+  -- reset
+  -- setLoggingEnabled
+  -- setRpcUrl
+- State
+  -- dumpState
+  -- loadState
+  -- revert
+  -- snapshot
+- Transaction
+  -- dropTransaction
+  -- getTxpoolContent
+  -- getTxpoolStatus
+  -- inspectTxpool
+  -- sendUnsignedTransaction
+
+Accounts
+- JSON-RPC Account
+- Local Accounts
+  -- Private Key
+  -- Mnemonic
+  -- Hierarchical Deterministic (HD)
+  -- Custom
+  -- Utilities
+  --- createNonceManager
+  --- signMessage
+  --- signTransaction
+  --- signTypedData
+
+Chains
+- Introduction
+- Configuration
+  -- Fees
+  -- Formatters
+  -- Serializers
+- Implementations
+  -- Celo
+  -- OP Stack
+  -- ZKsync
+
+Contract
+- Contract Instances
+  -- Actions
+  --- createContractEventFilter
+  -- deployContract
+  -- estimateContractGas
+  -- getCode
+  -- getContractEvents
+  -- getStorageAt
+  -- multicall
+  -- readContract
+  -- simulateContract
+  -- writeContract
+  -- watchContractEvent
+- Utilities
+  -- decodeDeployData
+  -- decodeErrorResult
+  -- decodeEventLog
+  -- decodeFunctionData
+  -- decodeFunctionResult
+  -- encodeDeployData
+  -- encodeErrorResult
+  -- encodeEventTopics
+  -- encodeFunctionData
+  -- encodeFunctionResult
+  -- parseEventLogs
+
+ENS
+- Actions
+  -- getEnsAddress
+  -- getEnsAvatar
+  -- getEnsName
+  -- getEnsResolver
+  -- getEnsText
+- Utilities
+  -- labelhash
+  -- namehash
+  -- normalize
+
+SIWE
+- Actions
+  -- verifySiweMessage
+- Utilities
+  -- createSiweMessage
+  -- generateSiweNonce
+  -- parseSiweMessage
+  -- validateSiweMessage
+
+ABI
+- Actions
+  -- decodeAbiParameters
+  -- encodeAbiParameters
+  -- encodePacked
+  -- getAbiItem
+  -- parseAbi
+  -- parseAbiItem
+  -- parseAbiParameter
+  -- parseAbiParameters
+
+EIP-7702
+- Overview
+- Guides
+  -- Contract Writes
+  -- Sending Transactions
+- Actions
+  -- prepareAuthorization
+  -- signAuthorization
+- Utilities
+  -- hashAuthorization
+  -- recoverAuthorizationAddress
+  -- verifyAuthorization
+
+Utilities
+- Addresses
+  -- getAddress
+  -- getContractAddress
+  -- isAddress
+  -- isAddressEqual
+- Blob
+  -- blobsToProofs
+  -- blobsToCommitments
+  -- commitmentsToVersionedHashes
+  -- commitmentToVersionedHash
+  -- fromBlobs
+  -- sidecarsToVersionedHashes
+  -- toBlobs
+  -- toBlobSidecars
+- Chain
+  -- extractChain
+- Data
+  -- concat
+  -- isBytes
+  -- isHex
+  -- pad
+  -- slice
+  -- size
+  -- trim
+- Encoding
+  -- fromBytes
+  -- fromHex
+  -- fromRlp
+  -- toBytes
+  -- toHex
+  -- toRlp
+- Hash
+  -- isHash
+  -- keccak256
+  -- ripemd160
+  -- sha256
+  -- toEventHash
+  -- toEventSelector
+  -- toEventSignature
+  -- toFunctionHash
+  -- toFunctionSelector
+  -- toFunctionSignature
+- KZG
+  -- setupKzg
+- Signature
+  -- compactSignatureToSignature
+  -- hashMessage
+  -- hashTypedData
+  -- isErc6492Signature
+  -- parseCompactSignature
+  -- parseErc6492Signature
+  -- parseSignature
+  -- recoverAddress
+  -- recoverMessageAddress
+  -- recoverPublicKey
+  -- recoverTransactionAddress
+  -- recoverTypedDataAddress
+  -- serializeCompactSignature
+  -- serializeErc6492Signature
+  -- serializeSignature
+  -- signatureToCompactSignature
+  -- verifyMessage
+  -- verifyTypedData
+- Transaction
+  -- parseTransaction
+  -- serializeTransaction
+- Units
+  -- formatEther
+  -- formatGwei
+  -- formatUnits
+  -- parseEther
+  -- parseGwei
+  -- parseUnits
+
+Glossary
+- Terms
+- Types
+- Errors
