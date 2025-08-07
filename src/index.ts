@@ -15,6 +15,8 @@ import {
   isAddress,
   keccak256,
   toHex,
+  encodeFunctionData,
+  encodeDeployData,
 } from "viem";
 import * as chains from "viem/chains";
 import { normalize } from "viem/ens";
@@ -978,6 +980,258 @@ server.tool(
         blockTag: blockTag as never,
       });
       return jsonResponse({ slot: input, value, address, chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+// Tranche 3 — ERC20
+server.tool(
+  "getERC20Metadata",
+  "Get ERC20 token metadata (name, symbol, decimals)",
+  {
+    type: "object",
+    properties: {
+      tokenAddress: { type: "string", description: "ERC20 contract address" },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["tokenAddress"],
+  },
+  async ({ tokenAddress, chain }) => {
+    try {
+      if (!isAddress(tokenAddress)) {
+        throw new Error("Invalid token address");
+      }
+      const client = clientManager.getClient(chain);
+      const [name, symbol, decimals] = await Promise.all([
+        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "name" }).catch(
+          () => ""
+        ),
+        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "symbol" }).catch(
+          () => ""
+        ),
+        client.readContract({ address: tokenAddress as Address, abi: erc20Abi, functionName: "decimals" }),
+      ]);
+      return jsonResponse({ tokenAddress, name, symbol, decimals: Number(decimals) });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getERC20Allowance",
+  "Get ERC20 allowance (spender allowance granted by owner)",
+  {
+    type: "object",
+    properties: {
+      tokenAddress: { type: "string", description: "ERC20 contract address" },
+      owner: { type: "string", description: "Owner address" },
+      spender: { type: "string", description: "Spender address" },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["tokenAddress", "owner", "spender"],
+  },
+  async ({ tokenAddress, owner, spender, chain }) => {
+    try {
+      if (!isAddress(tokenAddress)) {
+        throw new Error("Invalid token address");
+      }
+      if (!isAddress(owner)) {
+        throw new Error("Invalid owner address");
+      }
+      if (!isAddress(spender)) {
+        throw new Error("Invalid spender address");
+      }
+      const client = clientManager.getClient(chain);
+      const allowance = await client.readContract({
+        address: tokenAddress as Address,
+        abi: erc20Abi,
+        functionName: "allowance",
+        args: [owner as Address, spender as Address],
+      });
+      return jsonResponse({ tokenAddress, owner, spender, allowance: allowance.toString() });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+// Tranche 4 — ENS
+server.tool(
+  "getEnsName",
+  "Reverse resolve an address to ENS name",
+  {
+    type: "object",
+    properties: {
+      address: { type: "string", description: "Ethereum address" },
+      chain: { type: "string", description: "Chain to use (typically mainnet)" },
+    },
+    required: ["address"],
+  },
+  async ({ address, chain }) => {
+    try {
+      if (!isAddress(address)) {
+        throw new Error("Invalid address");
+      }
+      const client = clientManager.getClient(chain ?? "ethereum");
+      const name = await client.getEnsName({ address: address as Address });
+      return jsonResponse({ address, name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getEnsAvatar",
+  "Resolve ENS avatar for a name",
+  {
+    type: "object",
+    properties: {
+      name: { type: "string", description: "ENS name (e.g., vitalik.eth)" },
+      chain: { type: "string", description: "Chain to use (typically mainnet)" },
+    },
+    required: ["name"],
+  },
+  async ({ name, chain }) => {
+    try {
+      const client = clientManager.getClient(chain ?? "ethereum");
+      const avatar = await client.getEnsAvatar({ name: normalize(name) });
+      return jsonResponse({ name, avatar });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getEnsText",
+  "Resolve ENS text record for a name",
+  {
+    type: "object",
+    properties: {
+      name: { type: "string", description: "ENS name (e.g., vitalik.eth)" },
+      key: { type: "string", description: "Text record key (e.g., com.twitter)" },
+      chain: { type: "string", description: "Chain to use (typically mainnet)" },
+    },
+    required: ["name", "key"],
+  },
+  async ({ name, key, chain }) => {
+    try {
+      const client = clientManager.getClient(chain ?? "ethereum");
+      const text = await client.getEnsText({ name: normalize(name), key });
+      return jsonResponse({ name, key, text });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+// Tranche 5 — Tx prep / encoding
+server.tool(
+  "prepareTransactionRequest",
+  "Prepare a transaction request (no signing)",
+  {
+    type: "object",
+    properties: {
+      from: { type: "string", description: "Sender address (optional)" },
+      to: { type: "string", description: "Recipient address (omit for deploy)" },
+      data: { type: "string", description: "Calldata (0x...)" },
+      value: { type: "string", description: "Value in wei (decimal or 0x-hex)" },
+      gas: { type: "string", description: "Gas limit (decimal or 0x-hex)" },
+      maxFeePerGas: { type: "string", description: "EIP-1559: max fee per gas (wei)" },
+      maxPriorityFeePerGas: { type: "string", description: "EIP-1559: priority fee (wei)" },
+      gasPrice: { type: "string", description: "Legacy gas price (wei)" },
+      nonce: { type: "string", description: "Transaction nonce (decimal or 0x-hex)" },
+      chain: { type: "string", description: "Chain to prepare against" },
+    },
+    required: [],
+  },
+  async ({ from, to, data, value, gas, maxFeePerGas, maxPriorityFeePerGas, gasPrice, nonce, chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      const req: Record<string, unknown> = {};
+
+      const toBigIntIf = (v?: string) => (v ? BigInt(v) : undefined);
+
+      if (from) {
+        if (!isAddress(from)) {
+          throw new Error("Invalid from address");
+        }
+        req["from"] = from as Address;
+      }
+      if (to) {
+        if (!isAddress(to)) {
+          throw new Error("Invalid to address");
+        }
+        req["to"] = to as Address;
+      }
+      if (data) {
+        if (!/^0x[0-9a-fA-F]*$/.test(data)) {
+          throw new Error("'data' must be 0x-hex");
+        }
+        req["data"] = data as `0x${string}`;
+      }
+      if (value) req["value"] = toBigIntIf(value);
+      if (gas) req["gas"] = toBigIntIf(gas);
+      if (gasPrice) req["gasPrice"] = toBigIntIf(gasPrice);
+      if (maxFeePerGas) req["maxFeePerGas"] = toBigIntIf(maxFeePerGas);
+      if (maxPriorityFeePerGas) req["maxPriorityFeePerGas"] = toBigIntIf(maxPriorityFeePerGas);
+      if (nonce) req["nonce"] = Number(nonce);
+
+      // Let viem fill defaults (e.g., gas, fees) via estimate / fee market if missing
+      const prepared = await client.prepareTransactionRequest(req as never);
+      // Ensure BigInts are stringified
+      return jsonResponse(prepared);
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "encodeFunctionData",
+  "Encode function call data for a contract",
+  {
+    type: "object",
+    properties: {
+      abi: { type: "array", description: "ABI JSON array" },
+      functionName: { type: "string", description: "Function name" },
+      args: { type: "array", description: "Function arguments" },
+    },
+    required: ["abi", "functionName"],
+  },
+  async ({ abi, functionName, args }) => {
+    try {
+      const data = encodeFunctionData({ abi, functionName, args: Array.isArray(args) ? args : [] });
+      return jsonResponse({ data });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "encodeDeployData",
+  "Encode deployment data for a contract",
+  {
+    type: "object",
+    properties: {
+      abi: { type: "array", description: "Contract ABI" },
+      bytecode: { type: "string", description: "0x-hex bytecode" },
+      args: { type: "array", description: "Constructor args" },
+    },
+    required: ["abi", "bytecode"],
+  },
+  async ({ abi, bytecode, args }) => {
+    try {
+      if (!/^0x[0-9a-fA-F]*$/.test(bytecode)) {
+        throw new Error("'bytecode' must be 0x-hex");
+      }
+      const data = encodeDeployData({ abi, bytecode: bytecode as `0x${string}`, args: Array.isArray(args) ? args : [] });
+      return jsonResponse({ data });
     } catch (error) {
       return handleError(error);
     }

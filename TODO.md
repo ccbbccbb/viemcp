@@ -8,27 +8,49 @@
   - [x] getGasPrice
   - [x] estimateGas
   - [x] getChainId
+  - [x] getBalance (migrated from Tranche 0)
+  - [x] getBlockNumber (migrated from Tranche 0)
+  - [x] getTransaction (migrated from Tranche 0)
+  - [x] listSupportedChains (migrated from Tranche 0)
 
-- [ ] Tranche 2 — Contract operations
-  - [ ] simulateContract
-  - [ ] estimateContractGas
-  - [ ] multicall
-  - [ ] getCode
-  - [ ] getStorageAt
+- [x] Tranche 2 — Contract operations
+  - [x] simulateContract
+  - [x] estimateContractGas
+  - [x] multicall
+  - [x] getCode
+  - [x] getStorageAt
+  - [x] readContract (migrated from Tranche 0)
 
-- [ ] Tranche 3 — ERC20
-  - [ ] getERC20Metadata
-  - [ ] getERC20Allowance
+- [x] Tranche 3 — ERC20
+  - [x] getERC20Metadata
+  - [x] getERC20Allowance
+  - [x] getERC20Balance (migrated from Tranche 0)
 
-- [ ] Tranche 4 — ENS
-  - [ ] getEnsName
-  - [ ] getEnsAvatar
-  - [ ] getEnsText
+- [x] Tranche 4 — ENS
+  - [x] getEnsName
+  - [x] getEnsAvatar
+  - [x] getEnsText
+  - [x] resolveEnsAddress (migrated from Tranche 0)
 
-- [ ] Tranche 5 — Tx prep / encoding
-  - [ ] prepareTransactionRequest
-  - [ ] encodeFunctionData
-  - [ ] encodeDeployData
+- [x] Tranche 5 — Tx prep / encoding
+  - [x] prepareTransactionRequest
+  - [x] encodeFunctionData
+  - [x] encodeDeployData
+  - [x] parseEther (migrated from Tranche 0)
+  - [x] formatEther (migrated from Tranche 0)
+  - [x] isAddress (migrated from Tranche 0)
+  - [x] keccak256 (migrated from Tranche 0)
+
+## Overlap and Migration Notes (from Tranche 0)
+
+- getBalance → Tranche 1 (Public Actions: Account)
+- getBlockNumber → Tranche 1 (Public Actions: Block)
+- getTransaction → Tranche 1 (Public Actions: Transaction)
+- listSupportedChains → Tranche 1 (Discovery)
+- readContract → Tranche 2 (Contract)
+- getERC20Balance → Tranche 3 (ERC20)
+- resolveEnsAddress → Tranche 4 (ENS)
+- parseEther, formatEther, isAddress, keccak256 → Tranche 5 (Utilities)
 
 ## Tranche 0 — Already Implemented Tools (not in Tranche 1 or later)
 
