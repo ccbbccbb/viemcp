@@ -1,5 +1,96 @@
 # TODO
 
+## MCP Tools Integration Plan
+
+- [x] Tranche 1 — Core public actions
+  - [x] getBlock
+  - [x] getTransactionReceipt
+  - [x] getGasPrice
+  - [x] estimateGas
+  - [x] getChainId
+
+- [ ] Tranche 2 — Contract operations
+  - [ ] simulateContract
+  - [ ] estimateContractGas
+  - [ ] multicall
+  - [ ] getCode
+  - [ ] getStorageAt
+
+- [ ] Tranche 3 — ERC20
+  - [ ] getERC20Metadata
+  - [ ] getERC20Allowance
+
+- [ ] Tranche 4 — ENS
+  - [ ] getEnsName
+  - [ ] getEnsAvatar
+  - [ ] getEnsText
+
+- [ ] Tranche 5 — Tx prep / encoding
+  - [ ] prepareTransactionRequest
+  - [ ] encodeFunctionData
+  - [ ] encodeDeployData
+
+## Tranche 0 — Already Implemented Tools (not in Tranche 1 or later)
+
+- [x] getBalance
+  - Implementation: `clientManager.getClient(chain)` → `client.getBalance({ address })`
+  - Validation: `isAddress(address)`
+  - Output: formatted with `formatEther`, includes native symbol when available
+  - viem: `getBalance`, `formatEther`
+
+- [x] getBlockNumber
+  - Implementation: `client.getBlockNumber()`
+  - Output: stringified block number
+  - viem: `getBlockNumber`
+
+- [x] getTransaction
+  - Implementation: `client.getTransaction({ hash })`
+  - Validation: `^0x[0-9a-fA-F]{64}$` for `hash`
+  - Output: JSON with `hash, from, to, value (formatted), gasPrice, blockNumber`
+  - viem: `getTransaction`, `formatEther`
+
+- [x] readContract
+  - Implementation: `client.readContract({ address, abi, functionName, args })`
+  - Validation: `isAddress(address)`; ABI passed-through; args optional array
+  - Output: JSON `{ function, result }`
+  - viem: `readContract`
+
+- [x] getERC20Balance
+  - Implementation: ERC20 reads: `balanceOf(owner)`, `decimals()`, `symbol()` (fallback to "TOKEN")
+  - Validation: `isAddress(tokenAddress)`, `isAddress(ownerAddress)`
+  - Output: humanized balance using `decimals`
+  - viem: `erc20Abi`, `readContract`
+
+- [x] resolveEnsAddress
+  - Implementation: `client.getEnsAddress({ name: normalize(name) })` on `ethereum`
+  - Output: `name → address` or `not found`
+  - viem: `getEnsAddress`, `normalize`
+
+- [x] parseEther
+  - Implementation: `parseEther(value)`
+  - Output: `"<eth> ETH = <wei> wei"`
+  - viem: `parseEther`
+
+- [x] formatEther
+  - Implementation: `formatEther(BigInt(value))`
+  - Output: `"<wei> wei = <eth> ETH"`
+  - viem: `formatEther`
+
+- [x] isAddress
+  - Implementation: `isAddress(address)`
+  - Output: `Valid address` | `Invalid address`
+  - viem: `isAddress`
+
+- [x] keccak256
+  - Implementation: `keccak256(toHex(data))`
+  - Output: `Hash: 0x...`
+  - viem: `keccak256`, `toHex`
+
+- [x] listSupportedChains
+  - Implementation: enumerates internal `SUPPORTED_CHAINS` (viem chains + aliases)
+  - Output: JSON `{ name, chainId, displayName, nativeCurrency }[]`
+  - viem: `viem/chains` catalog (read at startup)
+
 ## Tools & Resources to Integrate
 
 IMPORTANT:

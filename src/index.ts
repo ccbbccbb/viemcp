@@ -10,6 +10,7 @@ import {
   type Hash,
   parseEther,
   formatEther,
+  formatGwei,
   erc20Abi,
   isAddress,
   keccak256,
@@ -178,6 +179,7 @@ const server = new McpServer(
   {
     capabilities: {
       tools: {},
+      resources: {},
     },
   }
 );
@@ -213,6 +215,15 @@ function handleError(error: unknown) {
       },
     ],
   };
+}
+
+// Helper to stringify JSON with BigInt support (prefix underscore to avoid unused rule)
+function _toJsonString(data: unknown) {
+  return JSON.stringify(
+    data,
+    (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+    2
+  );
 }
 
 // Core Blockchain Tools
@@ -578,9 +589,516 @@ server.tool(
   return jsonResponse({ supportedChains: chains });
 });
 
+// Tranche 1 — Core public actions
+server.tool(
+  "getBlock",
+  "Get block by number or tag",
+  {
+    type: "object",
+    properties: {
+      numberOrTag: {
+        type: "string",
+        description: "Block number as decimal string or tag (latest, earliest, pending)",
+      },
+      includeTransactions: {
+        type: "boolean",
+        description: "Whether to include full transactions in the block",
+      },
+      chain: {
+        type: "string",
+        description: "Chain to query",
+      },
+    },
+    required: ["numberOrTag"],
+  },
+  async ({ numberOrTag, includeTransactions, chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      const input = (numberOrTag ?? "").trim().toLowerCase();
+      if (!input) {
+        throw new Error("'numberOrTag' is required (e.g., 'latest' or a block number like '12345' or '0xabc')");
+      }
+
+      const tagSet = new Set(["latest", "earliest", "pending"]);
+      let block;
+      if (tagSet.has(input)) {
+        block = await client.getBlock({
+          blockTag: input as "latest" | "earliest" | "pending",
+          includeTransactions: Boolean(includeTransactions),
+        });
+      } else {
+        // Accept decimal or 0x-prefixed bigint strings
+        if (!/^\d+$/.test(input) && !/^0x[0-9a-fA-F]+$/.test(input)) {
+          throw new Error(
+            "'numberOrTag' must be a decimal number, 0x-hex number, or one of: latest | earliest | pending"
+          );
+        }
+        const bn = BigInt(input);
+        block = await client.getBlock({
+          blockNumber: bn,
+          includeTransactions: Boolean(includeTransactions),
+        });
+      }
+
+      return jsonResponse(block);
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getTransactionReceipt",
+  "Get transaction receipt by hash",
+  {
+    type: "object",
+    properties: {
+      hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "Transaction hash",
+      },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["hash"],
+  },
+  async ({ hash, chain }) => {
+    try {
+      if (!hash || !/^0x[a-fA-F0-9]{64}$/.test(hash)) {
+        throw new Error("Invalid or missing 'hash'. Expected 0x-prefixed 32-byte hash.");
+      }
+      const client = clientManager.getClient(chain);
+      const receipt = await client.getTransactionReceipt({ hash: hash as Hash });
+      return jsonResponse(receipt);
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getGasPrice",
+  "Get current gas price",
+  {
+    type: "object",
+    properties: {
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: [],
+  },
+  async ({ chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      const price = await client.getGasPrice();
+      const gwei = formatGwei(price);
+      return jsonResponse({ wei: price.toString(), gwei, chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "estimateGas",
+  "Estimate gas for a transaction request",
+  {
+    type: "object",
+    properties: {
+      from: { type: "string", description: "Sender address" },
+      to: { type: "string", description: "Recipient address (optional for deploy)", },
+      data: { type: "string", description: "Calldata (0x...)" },
+      value: { type: "string", description: "Value in wei as string" },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: [],
+  },
+  async ({ from, to, data, value, chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      const request: Record<string, unknown> = {};
+      if (from) {
+        if (!isAddress(from)) {
+          throw new Error("Invalid from address");
+        }
+        request["from"] = from as Address;
+      }
+      if (to) {
+        if (!isAddress(to)) {
+          throw new Error("Invalid to address");
+        }
+        request["to"] = to as Address;
+      }
+      if (data) {
+        if (!/^0x[0-9a-fA-F]*$/.test(data)) {
+          throw new Error("'data' must be a 0x-prefixed hex string");
+        }
+        request["data"] = data as `0x${string}`;
+      }
+      if (value) {
+        if (!/^\d+$/.test(value) && !/^0x[0-9a-fA-F]+$/.test(value)) {
+          throw new Error("'value' must be a decimal or 0x-hex string in wei");
+        }
+        request["value"] = BigInt(value);
+      }
+      const gas = await client.estimateGas(request);
+      return jsonResponse({ gas: gas.toString(), chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getChainId",
+  "Get chain ID",
+  {
+    type: "object",
+    properties: {
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: [],
+  },
+  async ({ chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      const id = await client.getChainId();
+      return jsonResponse({ chainId: id, chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+// Tranche 2 — Contract operations
+server.tool(
+  "simulateContract",
+  "Simulate a contract call (no state change)",
+  {
+    type: "object",
+    properties: {
+      address: { type: "string", description: "Contract address" },
+      abi: { type: "array", description: "ABI JSON array" },
+      functionName: { type: "string", description: "Function name" },
+      args: { type: "array", description: "Function arguments" },
+      chain: { type: "string", description: "Chain to query" },
+      from: { type: "string", description: "Optional caller address (for context)" },
+      value: { type: "string", description: "Optional msg.value in wei (decimal or 0x-hex)" },
+    },
+    required: ["address", "abi", "functionName"],
+  },
+  async ({ address, abi, functionName, args, chain, from, value }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      if (!isAddress(address)) {
+        throw new Error("Invalid contract address");
+      }
+      const request: Record<string, unknown> = {
+        address: address as Address,
+        abi,
+        functionName,
+        args: Array.isArray(args) ? args : [],
+      };
+      if (from) {
+        if (!isAddress(from)) {
+          throw new Error("Invalid from address");
+        }
+        request["account"] = from as Address;
+      }
+      if (value) {
+        if (!/^\d+$/.test(value) && !/^0x[0-9a-fA-F]+$/.test(value)) {
+          throw new Error("'value' must be a decimal or 0x-hex string in wei");
+        }
+        request["value"] = BigInt(value);
+      }
+      const result = await client.simulateContract(request as never);
+      return jsonResponse(result);
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "estimateContractGas",
+  "Estimate gas for a contract call",
+  {
+    type: "object",
+    properties: {
+      address: { type: "string", description: "Contract address" },
+      abi: { type: "array", description: "ABI JSON array" },
+      functionName: { type: "string", description: "Function name" },
+      args: { type: "array", description: "Function arguments" },
+      chain: { type: "string", description: "Chain to query" },
+      from: { type: "string", description: "Optional caller address (for context)" },
+      value: { type: "string", description: "Optional msg.value in wei (decimal or 0x-hex)" },
+    },
+    required: ["address", "abi", "functionName"],
+  },
+  async ({ address, abi, functionName, args, chain, from, value }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      if (!isAddress(address)) {
+        throw new Error("Invalid contract address");
+      }
+      const request: Record<string, unknown> = {
+        address: address as Address,
+        abi,
+        functionName,
+        args: Array.isArray(args) ? args : [],
+      };
+      if (from) {
+        if (!isAddress(from)) {
+          throw new Error("Invalid from address");
+        }
+        request["account"] = from as Address;
+      }
+      if (value) {
+        if (!/^\d+$/.test(value) && !/^0x[0-9a-fA-F]+$/.test(value)) {
+          throw new Error("'value' must be a decimal or 0x-hex string in wei");
+        }
+        request["value"] = BigInt(value);
+      }
+      const gas = await client.estimateContractGas(request as never);
+      return jsonResponse({ gas: gas.toString(), chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "multicall",
+  "Batch multiple contract reads (no state change)",
+  {
+    type: "object",
+    properties: {
+      contracts: {
+        type: "array",
+        description: "Array of { address, abi, functionName, args }",
+      },
+      allowFailure: {
+        type: "boolean",
+        description: "If true (default), failed calls return errors instead of failing the batch",
+      },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["contracts"],
+  },
+  async ({ contracts, allowFailure, chain }) => {
+    try {
+      const client = clientManager.getClient(chain);
+      if (!Array.isArray(contracts) || contracts.length === 0) {
+        throw new Error("'contracts' must be a non-empty array");
+      }
+      // Basic validation and shape normalization
+      type PartialContract = { address: string; abi: unknown[]; functionName: string; args?: unknown[] };
+      const normalized = (contracts as PartialContract[]).map((c) => {
+        if (!c || !isAddress(c.address)) {
+          throw new Error("Each contract must have a valid 'address'");
+        }
+        if (!Array.isArray(c.abi)) {
+          throw new Error("Each contract must include an 'abi' array");
+        }
+        if (!c.functionName || typeof c.functionName !== "string") {
+          throw new Error("Each contract must include a 'functionName'");
+        }
+        return {
+          address: c.address as Address,
+          abi: c.abi,
+          functionName: c.functionName,
+          args: Array.isArray(c.args) ? c.args : [],
+        };
+      });
+      const result = await client.multicall({
+        contracts: normalized as never,
+        allowFailure: allowFailure !== false,
+      });
+      return jsonResponse(result);
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getCode",
+  "Get contract bytecode at an address",
+  {
+    type: "object",
+    properties: {
+      address: { type: "string", description: "Address to query" },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["address"],
+  },
+  async ({ address, chain }) => {
+    try {
+      if (!isAddress(address)) {
+        throw new Error("Invalid address");
+      }
+      const client = clientManager.getClient(chain);
+      const code = await client.getCode({ address: address as Address });
+      return jsonResponse({ code, address, chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+
+server.tool(
+  "getStorageAt",
+  "Read raw storage slot at an address",
+  {
+    type: "object",
+    properties: {
+      address: { type: "string", description: "Contract address" },
+      slot: { type: "string", description: "Storage slot (0x-hex or decimal)" },
+      blockTag: {
+        type: "string",
+        description: "Optional block tag (latest, earliest, pending)",
+      },
+      chain: { type: "string", description: "Chain to query" },
+    },
+    required: ["address", "slot"],
+  },
+  async ({ address, slot, blockTag, chain }) => {
+    try {
+      if (!isAddress(address)) {
+        throw new Error("Invalid address");
+      }
+      const input = (slot ?? "").trim().toLowerCase();
+      if (!/^\d+$/.test(input) && !/^0x[0-9a-fA-F]+$/.test(input)) {
+        throw new Error("'slot' must be decimal or 0x-hex");
+      }
+      const index = BigInt(input);
+      const client = clientManager.getClient(chain);
+      const value = await client.getStorageAt({
+        address: address as Address,
+        slot: index,
+        blockTag: blockTag as never,
+      });
+      return jsonResponse({ slot: input, value, address, chain: client.chain?.name });
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+);
+// Dynamic GitHub Docs resources: recursively list MDX files in wevm/viem site/pages/docs and register each as a resource
+type GithubTreeEntry = { path: string; mode: string; type: "blob" | "tree"; sha: string; url: string };
+
+function getGithubHeaders(): Record<string, string> {
+  // Public access only (no token)
+  return {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "viemcp-mcp-server",
+  };
+}
+
+async function fetchViemDocsTree(): Promise<string[]> {
+  const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
+  const apiUrl = `https://api.github.com/repos/wevm/viem/git/trees/${branch}?recursive=1`;
+  const res = await fetch(apiUrl, { headers: getGithubHeaders() });
+  if (!res.ok) {
+    throw new Error(`GitHub tree fetch failed: ${res.status} ${res.statusText}`);
+  }
+  const data = (await res.json()) as { tree: GithubTreeEntry[] };
+  const base = "site/pages/docs/";
+  return data.tree
+    .filter((e) => e.type === "blob" && e.path.startsWith(base) && e.path.endsWith(".mdx"))
+    .map((e) => e.path.slice(base.length)); // relative path under docs/
+}
+
+function registerGithubDocResource(relativePath: string) {
+  // Use the relative path as the resource path; include extension for uniqueness
+  const uri = `viem://docs/github/${relativePath}`;
+  const name = `viem-doc-${relativePath.replace(/\//g, "-")}`;
+  server.registerResource(
+    name,
+    uri,
+    {
+      title: `Viem Docs (GitHub): ${relativePath}`,
+      description: `Live content from wevm/viem/site/pages/docs/${relativePath}`,
+      mimeType: "text/markdown",
+    },
+    async (url) => {
+      try {
+        const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
+        const rawUrl = `https://raw.githubusercontent.com/wevm/viem/${branch}/site/pages/docs/${relativePath}`;
+        const res = await fetch(rawUrl, { headers: { "User-Agent": "viemcp-mcp-server" } });
+        if (!res.ok) {
+          throw new Error(`GitHub raw fetch failed: ${res.status} ${res.statusText}`);
+        }
+        const text = await res.text();
+        return {
+          contents: [
+            {
+              uri: url.href,
+              mimeType: "text/markdown",
+              text,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          contents: [
+            {
+              uri: url.href,
+              mimeType: "text/plain",
+              text: `Error loading GitHub doc: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
+async function setupGithubDocsResources() {
+  try {
+    const mdxPaths = await fetchViemDocsTree();
+    // Index resource with a list of discovered URIs
+    const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
+    const indexTextLines = [
+      `Viem GitHub docs (branch: ${branch})`,
+      "",
+      "Discovered MDX files:",
+      ...mdxPaths.map((p) => `- viem://docs/github/${p}`),
+    ];
+    server.registerResource(
+      "viem-docs-github-index",
+      "viem://docs/github-index",
+      {
+        title: "Viem Docs (GitHub) Index",
+        description: "List of all Viem GitHub docs registered as resources",
+        mimeType: "text/markdown",
+      },
+      async (uri) => ({
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: "text/markdown",
+            text: indexTextLines.join("\n"),
+          },
+        ],
+      })
+    );
+    // Register each doc resource
+    mdxPaths.forEach(registerGithubDocResource);
+  } catch (error) {
+    console.error(
+      "Failed to setup GitHub docs resources:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+}
+
 // Start server
 async function main() {
   const transport = new StdioServerTransport();
+  // Register GitHub-based Viem docs resources before connecting
+  await setupGithubDocsResources();
   await server.connect(transport);
   console.error("viemcp started successfully");
 }
