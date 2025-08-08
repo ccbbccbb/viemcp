@@ -1,19 +1,19 @@
-'use client'
-import { useState } from 'react'
-import { ChainMultiSelect } from '@/components/ChainMultiSelect'
-import { ConfigForm } from '@/components/ConfigForm'
+"use client";
+import { useState } from "react";
+import { ChainMultiSelect } from "@/components/ChainMultiSelect";
+import { ConfigForm } from "@/components/ConfigForm";
 
-type Chain = { id:number; name:string; slug:string }
+type Chain = { id: number; name: string; slug: string };
 
 export default function Page() {
-  const [selected, setSelected] = useState<Chain[]>([{ id: 1, name: 'Ethereum', slug: 'mainnet' }])
-  const [copied, setCopied] = useState(false)
+  const [selected, setSelected] = useState<Chain[]>([{ id: 1, name: "Ethereum", slug: "mainnet" }]);
+  const [copied, setCopied] = useState(false);
 
   const handleCopyNpx = async () => {
-    await navigator.clipboard.writeText('npx viemcp')
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1200)
-  }
+    await navigator.clipboard.writeText("npx viemcp");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
 
   return (
     <main className="min-h-screen">
@@ -30,11 +30,8 @@ export default function Page() {
         <div className="relative max-w-md w-full">
           <div className="code-block text-lg font-mono flex items-center justify-between">
             <span>npx viemcp</span>
-            <button
-              className="copy-btn"
-              onClick={handleCopyNpx}
-            >
-              {copied ? 'Copied' : 'Copy'}
+            <button className="copy-btn" onClick={handleCopyNpx}>
+              {copied ? "Copied" : "Copy"}
             </button>
           </div>
         </div>
@@ -54,5 +51,5 @@ export default function Page() {
         Built with Next.js 15 + Tailwind v4 - styled by viem.
       </footer>
     </main>
-  )
+  );
 }
