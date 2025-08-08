@@ -34,15 +34,25 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
           (params as { topics?: unknown[] }).topics = topics as unknown[];
         }
         const parseBlock = (v?: string): bigint | BlockTag | undefined => {
-          if (!v) {return undefined;}
-          if (/^\d+$/.test(v) || /^0x[0-9a-fA-F]+$/.test(v)) {return BigInt(v);}
-          if (v === "latest" || v === "earliest" || v === "pending") {return v as BlockTag;}
+          if (!v) {
+            return undefined;
+          }
+          if (/^\d+$/.test(v) || /^0x[0-9a-fA-F]+$/.test(v)) {
+            return BigInt(v);
+          }
+          if (v === "latest" || v === "earliest" || v === "pending") {
+            return v as BlockTag;
+          }
           return undefined;
         };
         const fb = parseBlock(fromBlock);
-        if (fb !== undefined) {(params as { fromBlock?: bigint | BlockTag }).fromBlock = fb;}
+        if (fb !== undefined) {
+          (params as { fromBlock?: bigint | BlockTag }).fromBlock = fb;
+        }
         const tb = parseBlock(toBlock);
-        if (tb !== undefined) {(params as { toBlock?: bigint | BlockTag }).toBlock = tb;}
+        if (tb !== undefined) {
+          (params as { toBlock?: bigint | BlockTag }).toBlock = tb;
+        }
         const logs = await client.getLogs(params);
         return jsonResponse({ count: logs.length, logs });
       } catch (error) {

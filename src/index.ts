@@ -241,7 +241,12 @@ server.tool(
           functionName: c.functionName,
           args: Array.isArray(c.args) ? (c.args as readonly unknown[]) : [],
         };
-      }) as readonly { address: Address; abi: Abi; functionName: string; args?: readonly unknown[] }[];
+      }) as readonly {
+        address: Address;
+        abi: Abi;
+        functionName: string;
+        args?: readonly unknown[];
+      }[];
       const result = await client.multicall({
         contracts: normalized,
         allowFailure: allowFailure !== false,

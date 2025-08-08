@@ -48,12 +48,18 @@ describe("consolidated tools typing", () => {
     await cb({ action: "read", ...common });
     expect(clientManager.client.readContract).toHaveBeenCalledOnce();
 
-    await cb({ action: "simulate", ...common, account: "0x0000000000000000000000000000000000000002" });
+    await cb({
+      action: "simulate",
+      ...common,
+      account: "0x0000000000000000000000000000000000000002",
+    });
     expect(clientManager.client.simulateContract).toHaveBeenCalledOnce();
 
-    await cb({ action: "estimateGas", ...common, account: "0x0000000000000000000000000000000000000002" });
+    await cb({
+      action: "estimateGas",
+      ...common,
+      account: "0x0000000000000000000000000000000000000002",
+    });
     expect(clientManager.client.estimateContractGas).toHaveBeenCalledOnce();
   });
 });
-
-

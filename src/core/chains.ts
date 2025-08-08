@@ -66,10 +66,10 @@ export async function resolveChainById(id: number): Promise<Chain | undefined> {
       return undefined;
     }
     const all = await import("viem/chains");
-  const values = Object.values(all) as unknown[];
-  const chain = values.find((c) => c && typeof c === "object" && (c as { id?: number }).id === id) as
-    | Chain
-    | undefined;
+    const values = Object.values(all) as unknown[];
+    const chain = values.find(
+      (c) => c && typeof c === "object" && (c as { id?: number }).id === id
+    ) as Chain | undefined;
     return chain;
   } catch {
     return undefined;

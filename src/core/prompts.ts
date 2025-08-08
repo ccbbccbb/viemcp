@@ -13,8 +13,7 @@ export function registerEVMPrompts(server: McpServer) {
       "generate_viem_code",
       {
         title: "Generate viem code",
-        description:
-          "Consult viem GitHub docs resources to produce code and integration steps",
+        description: "Consult viem GitHub docs resources to produce code and integration steps",
         argsSchema: { feature: z.string(), hints: z.string().optional() } as any,
       },
       ((args: any, _extra: unknown) => {
@@ -64,7 +63,10 @@ export function registerEVMPrompts(server: McpServer) {
           messages: [
             {
               role: "user",
-              content: { type: "text", text: `Please analyze transaction ${txHash} on ${chain}. Include purpose, parties, value, gas, and any noteworthy effects.` },
+              content: {
+                type: "text",
+                text: `Please analyze transaction ${txHash} on ${chain}. Include purpose, parties, value, gas, and any noteworthy effects.`,
+              },
             },
           ],
         };
@@ -89,7 +91,10 @@ export function registerEVMPrompts(server: McpServer) {
           messages: [
             {
               role: "user",
-              content: { type: "text", text: `Please analyze the address ${address} on ${chain}. Include balance, nonce, recent activity, and potential contract status.` },
+              content: {
+                type: "text",
+                text: `Please analyze the address ${address} on ${chain}. Include balance, nonce, recent activity, and potential contract status.`,
+              },
             },
           ],
         };
@@ -120,7 +125,10 @@ export function registerEVMPrompts(server: McpServer) {
                   `Provide a concise summary and a short how-to snippet if applicable.`,
               },
             },
-            { role: "user", content: { type: "resource", resource: { uri: "viem://docs/github-index" } } },
+            {
+              role: "user",
+              content: { type: "resource", resource: { uri: "viem://docs/github-index" } },
+            },
           ],
         };
       }) as any

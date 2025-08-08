@@ -461,7 +461,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
             }
             const v = await client.getStorageAt({
               address: address as Address,
-              slot: (/^0x/i.test(input) ? (input as `0x${string}`) : (toHex(BigInt(input)) as `0x${string}`)),
+              slot: /^0x/i.test(input)
+                ? (input as `0x${string}`)
+                : (toHex(BigInt(input)) as `0x${string}`),
               blockTag: blockTag as BlockTag | undefined,
             });
             result[input] = String(v);
@@ -543,8 +545,17 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     },
     async (params) => {
       try {
-        const { action, address, abi, functionName, args, account, value: _value, blockTag, chain } =
-          validateInput(ContractActionSchema, params);
+        const {
+          action,
+          address,
+          abi,
+          functionName,
+          args,
+          account,
+          value: _value,
+          blockTag,
+          chain,
+        } = validateInput(ContractActionSchema, params);
         const client = clientManager.getClient(chain);
         const abiTyped = abi as Abi;
         if (action === "read") {

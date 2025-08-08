@@ -39,5 +39,3 @@ export interface LogParameters {
   fromBlock?: bigint | BlockTag;
   toBlock?: bigint | BlockTag;
 }
-
-
