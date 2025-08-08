@@ -11,9 +11,15 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     {
       type: "object",
       properties: {
-        numberOrTag: { type: "string", description: "Block number (dec/hex) or tag (latest/earliest/pending)" },
+        numberOrTag: {
+          type: "string",
+          description: "Block number (dec/hex) or tag (latest/earliest/pending)",
+        },
         includeTxCount: { type: "boolean", description: "Include transaction count" },
-        includeFullTransactions: { type: "boolean", description: "Include full transactions array" },
+        includeFullTransactions: {
+          type: "boolean",
+          description: "Include full transactions array",
+        },
         chain: { type: "string", description: "Chain to query" },
       },
       required: [],
@@ -25,8 +31,14 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         const tagSet = new Set(["latest", "earliest", "pending"]);
         const isTag = tagSet.has(input);
         const block = isTag
-          ? await client.getBlock({ blockTag: input as never, includeTransactions: Boolean(includeFullTransactions) })
-          : await client.getBlock({ blockNumber: BigInt(input), includeTransactions: Boolean(includeFullTransactions) });
+          ? await client.getBlock({
+              blockTag: input as never,
+              includeTransactions: Boolean(includeFullTransactions),
+            })
+          : await client.getBlock({
+              blockNumber: BigInt(input),
+              includeTransactions: Boolean(includeFullTransactions),
+            });
         let transactionCount: number | undefined = undefined;
         if (includeTxCount) {
           transactionCount = isTag
@@ -49,7 +61,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       properties: {
         hash: { type: "string", description: "Transaction hash (0x...)" },
         includeReceipt: { type: "boolean", description: "Include transaction receipt" },
-        includeLogs: { type: "boolean", description: "Include logs from receipt (implies includeReceipt)" },
+        includeLogs: {
+          type: "boolean",
+          description: "Include logs from receipt (implies includeReceipt)",
+        },
         chain: { type: "string", description: "Chain to query" },
       },
       required: ["hash"],
@@ -87,7 +102,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       properties: {
         address: { type: "string", description: "Ethereum address" },
         blockTag: { type: "string", description: "Optional block tag for balance/nonce" },
-        historicalBalanceAt: { type: "string", description: "Block tag or number for historical balance lookup" },
+        historicalBalanceAt: {
+          type: "string",
+          description: "Block tag or number for historical balance lookup",
+        },
         includeNonce: { type: "boolean", description: "Include nonce (transaction count)" },
         chain: { type: "string", description: "Chain to query" },
       },
@@ -99,12 +117,23 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           throw new Error("Invalid address");
         }
         const client = clientManager.getClient(chain);
-        const balance = await client.getBalance({ address: address as Address, blockTag: (historicalBalanceAt ?? blockTag) as never });
+        const balance = await client.getBalance({
+          address: address as Address,
+          blockTag: (historicalBalanceAt ?? blockTag) as never,
+        });
         let nonce: number | undefined;
         if (includeNonce) {
-          nonce = await client.getTransactionCount({ address: address as Address, blockTag: blockTag as never });
+          nonce = await client.getTransactionCount({
+            address: address as Address,
+            blockTag: blockTag as never,
+          });
         }
-        return jsonResponse({ address, balance: balance.toString(), formatted: formatEther(balance), nonce });
+        return jsonResponse({
+          address,
+          balance: balance.toString(),
+          formatted: formatEther(balance),
+          nonce,
+        });
       } catch (error) {
         return handleError(error);
       }
@@ -142,9 +171,17 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         }
         if (history && history.blockCount && history.newestBlock) {
           const count = Number(history.blockCount);
-          const newest = /^latest|earliest|pending$/.test(history.newestBlock) ? (history.newestBlock as never) : (BigInt(history.newestBlock) as never);
-          const rewards = Array.isArray(history.rewardPercentiles) ? (history.rewardPercentiles as number[]) : [];
-          out["feeHistory"] = await client.getFeeHistory({ blockCount: count, blockTag: newest, rewardPercentiles: rewards });
+          const newest = /^latest|earliest|pending$/.test(history.newestBlock)
+            ? (history.newestBlock as never)
+            : (BigInt(history.newestBlock) as never);
+          const rewards = Array.isArray(history.rewardPercentiles)
+            ? (history.rewardPercentiles as number[])
+            : [];
+          out["feeHistory"] = await client.getFeeHistory({
+            blockCount: count,
+            blockTag: newest,
+            rewardPercentiles: rewards,
+          });
         }
         return jsonResponse(out);
       } catch (error) {
@@ -171,12 +208,22 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["lookupType", "value"],
     },
-    async ({ lookupType, value, includeAddress, includeName, includeResolver, includeAvatar, textKeys, chain }) => {
+    async ({
+      lookupType,
+      value,
+      includeAddress,
+      includeName,
+      includeResolver,
+      includeAvatar,
+      textKeys,
+      chain,
+    }) => {
       try {
         const client = clientManager.getClient(chain ?? "ethereum");
         const out: Record<string, unknown> = { lookupType };
         if (lookupType === "name") {
-          const address = (includeAddress !== false) ? await client.getEnsAddress({ name: value }) : undefined;
+          const address =
+            includeAddress !== false ? await client.getEnsAddress({ name: value }) : undefined;
           out["address"] = address ?? null;
           if (includeResolver) {
             out["resolver"] = await client.getEnsResolver({ name: value });
@@ -187,7 +234,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           if (Array.isArray(textKeys) && textKeys.length) {
             const texts: Record<string, string | null> = {};
             for (const key of textKeys) {
-              texts[key] = (await client.getEnsText({ name: value, key }).catch(() => null)) as string | null;
+              texts[key] = (await client.getEnsText({ name: value, key }).catch(() => null)) as
+                | string
+                | null;
             }
             out["texts"] = texts;
           }
@@ -195,7 +244,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           if (!isAddress(value)) {
             throw new Error("Invalid address");
           }
-          out["name"] = includeName ? await client.getEnsName({ address: value as Address }) : undefined;
+          out["name"] = includeName
+            ? await client.getEnsName({ address: value as Address })
+            : undefined;
         } else {
           throw new Error("lookupType must be 'name' or 'address'");
         }
@@ -232,9 +283,28 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         const out: Record<string, unknown> = { token };
         if (includeMetadata !== false) {
           const [name, symbol, decimals] = await Promise.all([
-            client.readContract({ address: token as Address, abi: erc20Abi, functionName: "name", args: [] }).catch(() => ""),
-            client.readContract({ address: token as Address, abi: erc20Abi, functionName: "symbol", args: [] }).catch(() => ""),
-            client.readContract({ address: token as Address, abi: erc20Abi, functionName: "decimals", args: [] }),
+            client
+              .readContract({
+                address: token as Address,
+                abi: erc20Abi,
+                functionName: "name",
+                args: [],
+              })
+              .catch(() => ""),
+            client
+              .readContract({
+                address: token as Address,
+                abi: erc20Abi,
+                functionName: "symbol",
+                args: [],
+              })
+              .catch(() => ""),
+            client.readContract({
+              address: token as Address,
+              abi: erc20Abi,
+              functionName: "decimals",
+              args: [],
+            }),
           ]);
           out["metadata"] = { name, symbol, decimals: Number(decimals) };
         }
@@ -242,14 +312,24 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           if (!isAddress(owner)) {
             throw new Error("Invalid owner");
           }
-          const balance = (await client.readContract({ address: token as Address, abi: erc20Abi, functionName: "balanceOf", args: [owner as Address] })) as bigint;
+          const balance = (await client.readContract({
+            address: token as Address,
+            abi: erc20Abi,
+            functionName: "balanceOf",
+            args: [owner as Address],
+          })) as bigint;
           out["balance"] = { raw: balance.toString() };
         }
         if (includeAllowance && owner && spender) {
           if (!isAddress(owner) || !isAddress(spender)) {
             throw new Error("Invalid owner/spender");
           }
-          const allowance = (await client.readContract({ address: token as Address, abi: erc20Abi, functionName: "allowance", args: [owner as Address, spender as Address] })) as bigint;
+          const allowance = (await client.readContract({
+            address: token as Address,
+            abi: erc20Abi,
+            functionName: "allowance",
+            args: [owner as Address, spender as Address],
+          })) as bigint;
           out["allowance"] = allowance.toString();
         }
         return jsonResponse(out);
@@ -283,7 +363,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         const client = clientManager.getClient(chain);
         const out: Record<string, unknown> = { address };
         if (includeCode !== false) {
-          out["code"] = await client.getCode({ address: address as Address, blockTag: blockTag as never });
+          out["code"] = await client.getCode({
+            address: address as Address,
+            blockTag: blockTag as never,
+          });
         }
         if (includeStorage && Array.isArray(slots) && slots.length) {
           const result: Record<string, string> = {};
@@ -292,7 +375,11 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
             if (!/^\d+$/.test(input) && !/^0x[0-9a-fA-F]+$/.test(input)) {
               throw new Error("slot must be dec or 0x-hex");
             }
-            const v = await client.getStorageAt({ address: address as Address, slot: BigInt(input) as unknown as `0x${string}`, blockTag: blockTag as never });
+            const v = await client.getStorageAt({
+              address: address as Address,
+              slot: BigInt(input) as unknown as `0x${string}`,
+              blockTag: blockTag as never,
+            });
             result[input] = v as unknown as string;
           }
           out["storage"] = result;
@@ -324,7 +411,11 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       try {
         if (mode === "function") {
           const { encodeFunctionData } = await import("viem");
-          const data = encodeFunctionData({ abi, functionName, args: Array.isArray(args) ? args : [] });
+          const data = encodeFunctionData({
+            abi,
+            functionName,
+            args: Array.isArray(args) ? args : [],
+          });
           return jsonResponse({ data });
         }
         if (mode === "deploy") {
@@ -332,7 +423,11 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
             throw new Error("bytecode must be 0x-hex");
           }
           const { encodeDeployData } = await import("viem");
-          const data = encodeDeployData({ abi, bytecode: bytecode as `0x${string}`, args: Array.isArray(constructorArgs) ? constructorArgs : [] });
+          const data = encodeDeployData({
+            abi,
+            bytecode: bytecode as `0x${string}`,
+            args: Array.isArray(constructorArgs) ? constructorArgs : [],
+          });
           return jsonResponse({ data });
         }
         throw new Error("mode must be 'function' or 'deploy'");
@@ -428,7 +523,19 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["mode"],
     },
-    async ({ mode, from, to, data, value, gas, maxFeePerGas, maxPriorityFeePerGas, gasPrice, nonce, chain }) => {
+    async ({
+      mode,
+      from,
+      to,
+      data,
+      value,
+      gas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      gasPrice,
+      nonce,
+      chain,
+    }) => {
       try {
         const client = clientManager.getClient(chain);
         const req: Record<string, unknown> = {};
@@ -505,7 +612,11 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         out["chainId"] = id;
         if (includeSupported) {
           const { SUPPORTED_CHAINS, getRpcUrl } = await import("../chains.js");
-          out["supportedChains"] = Object.entries(SUPPORTED_CHAINS).map(([name, c]) => ({ name, chainId: c.id, displayName: c.name }));
+          out["supportedChains"] = Object.entries(SUPPORTED_CHAINS).map(([name, c]) => ({
+            name,
+            chainId: c.id,
+            displayName: c.name,
+          }));
           if (includeRpcUrl && chain) {
             out["rpcUrl"] = getRpcUrl(chain);
           }
@@ -522,15 +633,15 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     "viemGetLogs",
     "Alias of getLogs (kept standalone due to flexible filter surface)",
     { type: "object", properties: {}, required: [] },
-    async () => textResponse("Use getLogs with desired filters; alias provided for naming consistency.")
+    async () =>
+      textResponse("Use getLogs with desired filters; alias provided for naming consistency.")
   );
 
   server.tool(
     "viemMulticall",
     "Alias of multicall (batch read-only calls)",
     { type: "object", properties: {}, required: [] },
-    async () => textResponse("Use multicall with contracts array; alias provided for naming consistency.")
+    async () =>
+      textResponse("Use multicall with contracts array; alias provided for naming consistency.")
   );
 }
-
-

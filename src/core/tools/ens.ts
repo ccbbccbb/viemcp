@@ -26,5 +26,3 @@ export function registerEnsTools(server: McpServer, clientManager: ClientManager
     }
   );
 }
-
-

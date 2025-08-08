@@ -23,7 +23,10 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
           throw new Error("Invalid address");
         }
         const client = clientManager.getClient(chain);
-        const count = await client.getTransactionCount({ address: address as Address, blockTag: blockTag as never });
+        const count = await client.getTransactionCount({
+          address: address as Address,
+          blockTag: blockTag as never,
+        });
         return jsonResponse({ address, nonce: count, chain: client.chain?.name });
       } catch (error) {
         return handleError(error);
@@ -93,7 +96,8 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
         if (Array.isArray(topics)) {
           params["topics"] = topics as unknown[];
         }
-        const parseBlock = (v?: string) => (v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never));
+        const parseBlock = (v?: string) =>
+          v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never);
         if (fromBlock) {
           params["fromBlock"] = parseBlock(fromBlock);
         }
@@ -128,9 +132,15 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
         if (!Number.isFinite(count) || count <= 0) {
           throw new Error("Invalid blockCount");
         }
-        const nb = /^latest|earliest|pending$/.test(newestBlock) ? (newestBlock as never) : (BigInt(newestBlock) as never);
+        const nb = /^latest|earliest|pending$/.test(newestBlock)
+          ? (newestBlock as never)
+          : (BigInt(newestBlock) as never);
         const rewards = Array.isArray(rewardPercentiles) ? (rewardPercentiles as number[]) : [];
-        const history = await client.getFeeHistory({ blockCount: count, rewardPercentiles: rewards, blockTag: nb });
+        const history = await client.getFeeHistory({
+          blockCount: count,
+          rewardPercentiles: rewards,
+          blockTag: nb,
+        });
         return jsonResponse(history);
       } catch (error) {
         return handleError(error);
@@ -138,5 +148,3 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
     }
   );
 }
-
-
