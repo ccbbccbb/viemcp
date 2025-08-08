@@ -1,6 +1,14 @@
-![viemcp](@viemcp-logo-white.png)
+<div align="center">
 
-A Model Context Protocol (MCP) server that provides blockchain interaction capabilities through [viem](https://viem.sh) and [wagmi](https://wagmi.sh), enabling AI assistants to help with integration of both frameworks as well as read onchain data & view smart contract state.
+  <img src="site/public/viemcp-logo-white.png" alt="viemcp" />
+
+  <p>
+    A Model Context Protocol (MCP) server that provides blockchain interaction capabilities through
+    <a href="https://viem.sh">viem</a> and <a href="https://wagmi.sh">wagmi</a>, enabling AI assistants to help with
+    integration of both frameworks as well as read onchain data &amp; view smart contract state.
+  </p>
+
+</div>
 
 ## Features
 
