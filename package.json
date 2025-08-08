@@ -1,6 +1,6 @@
 {
   "name": "viemcp",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Model Context Protocol server for blockchain interactions using viem",
   "keywords": [
     "mcp",
@@ -48,7 +48,10 @@
     "prepublishOnly": "bun run prepack",
     "release": "bun run prepack && bun publish --access public",
     "release:dry": "bun run prepack && bun publish --dry-run",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -67,8 +70,10 @@
     "@types/node": "^24.2.0",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9.32.0",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }

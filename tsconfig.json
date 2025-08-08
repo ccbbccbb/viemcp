@@ -23,5 +23,5 @@
     "types": ["node", "bun"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "build", "tests"]
+  "exclude": ["node_modules", "build", "tests", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }

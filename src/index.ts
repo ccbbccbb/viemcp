@@ -17,7 +17,6 @@ import {
   encodeDeployData,
 } from "viem";
 import { normalize } from "viem/ens";
-import { z } from "zod";
 import { registerEVMPrompts } from "./core/prompts.js";
 import { registerPublicTools } from "./core/tools/public.js";
 import { registerEnsTools } from "./core/tools/ens.js";
@@ -26,26 +25,45 @@ import { ClientManager } from "./core/clientManager.js";
 import { setupGithubDocsResources } from "./core/resources/docs.js";
 import { jsonResponse, textResponse, handleError } from "./core/responses.js";
 import { SUPPORTED_CHAINS } from "./core/chains.js";
+import {
+  validateInput,
+  GetBalanceSchema,
+  GetBlockNumberSchema,
+  GetTransactionSchema,
+  ReadContractSchema,
+  GetERC20BalanceSchema,
+  ResolveEnsAddressSchema,
+  ParseEtherSchema,
+  FormatEtherSchema,
+  IsAddressSchema,
+  Keccak256Schema,
+  // GetBlockSchema,
+  // GetTransactionReceiptSchema,
+  // GetGasPriceSchema,
+  // EstimateGasSchema,
+  // GetChainIdSchema,
+  // SimulateContractSchema,
+  // EstimateContractGasSchema,
+  // MulticallSchema,
+  // GetCodeSchema,
+  // GetStorageAtSchema,
+  // GetERC20MetadataSchema,
+  // GetERC20AllowanceSchema,
+  // GetEnsNameSchema,
+  // PrepareTransactionRequestSchema,
+  // EncodeFunctionDataSchema,
+  // EncodeDeployDataSchema,
+} from "./core/validation.js";
 
 // RPC URL resolution moved to core/chains.ts
 
 const clientManager = new ClientManager();
 
-// Validation schemas
-const _AddressSchema = z.string().refine((val) => isAddress(val), {
-  message: "Invalid Ethereum address",
-});
-const _HashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid hash");
-// Create dynamic chain name schema from supported chains
-const _ChainNameSchema = z.string().refine((chainName: string) => chainName in SUPPORTED_CHAINS, {
-  message: "Unsupported chain. Use 'listSupportedChains' tool to see available chains.",
-});
-
 // Create server instance
 const server = new McpServer(
   {
     name: "viemcp",
-    version: "0.0.1",
+    version: "0.0.3",
   },
   {
     capabilities: {
@@ -94,13 +112,9 @@ server.tool(
     },
     required: ["address"],
   },
-  async ({ address, chain }) => {
+  async (params) => {
     try {
-      // Validate address
-      if (!isAddress(address)) {
-        throw new Error("Invalid Ethereum address");
-      }
-
+      const { address, chain } = validateInput(GetBalanceSchema, params);
       const client = clientManager.getClient(chain);
       const balance = await client.getBalance({
         address: address as Address,
@@ -128,8 +142,9 @@ server.tool(
     },
     required: [],
   },
-  async ({ chain }) => {
+  async (params) => {
     try {
+      const { chain } = validateInput(GetBlockNumberSchema, params);
       const client = clientManager.getClient(chain);
       const blockNumber = await client.getBlockNumber();
 
@@ -158,13 +173,9 @@ server.tool(
     },
     required: ["hash"],
   },
-  async ({ hash, chain }) => {
+  async (params) => {
     try {
-      // Validate hash format
-      if (!/^0x[a-fA-F0-9]{64}$/.test(hash)) {
-        throw new Error("Invalid transaction hash format");
-      }
-
+      const { hash, chain } = validateInput(GetTransactionSchema, params);
       const client = clientManager.getClient(chain);
       const tx = await client.getTransaction({ hash: hash as Hash });
 
@@ -212,13 +223,9 @@ server.tool(
     },
     required: ["address", "abi", "functionName"],
   },
-  async ({ address, abi, functionName, args, chain }) => {
+  async (params) => {
     try {
-      // Validate address
-      if (!isAddress(address)) {
-        throw new Error("Invalid contract address");
-      }
-
+      const { address, abi, functionName, args, chain } = validateInput(ReadContractSchema, params);
       const client = clientManager.getClient(chain);
       const result = await client.readContract({
         address: address as Address,
@@ -256,16 +263,9 @@ server.tool(
     },
     required: ["tokenAddress", "ownerAddress"],
   },
-  async ({ tokenAddress, ownerAddress, chain }) => {
+  async (params) => {
     try {
-      // Validate addresses
-      if (!isAddress(tokenAddress)) {
-        throw new Error("Invalid token contract address");
-      }
-      if (!isAddress(ownerAddress)) {
-        throw new Error("Invalid owner address");
-      }
-
+      const { tokenAddress, ownerAddress, chain } = validateInput(GetERC20BalanceSchema, params);
       const client = clientManager.getClient(chain);
 
       const [balance, decimals, symbol] = await Promise.all([
@@ -320,8 +320,9 @@ server.tool(
     },
     required: ["name"],
   },
-  async ({ name, chain, includeAvatar, textKeys }) => {
+  async (params) => {
     try {
+      const { name, chain, includeAvatar, textKeys } = validateInput(ResolveEnsAddressSchema, params);
       const client = clientManager.getClient(chain ?? "ethereum");
       const normalized = normalize(name);
 
@@ -370,8 +371,9 @@ server.tool(
     },
     required: ["value"],
   },
-  async ({ value }) => {
+  async (params) => {
     try {
+      const { value } = validateInput(ParseEtherSchema, params);
       const wei = parseEther(value);
       return textResponse(`${value} ETH = ${wei.toString()} wei`);
     } catch (error) {
@@ -393,8 +395,9 @@ server.tool(
     },
     required: ["value"],
   },
-  async ({ value }) => {
+  async (params) => {
     try {
+      const { value } = validateInput(FormatEtherSchema, params);
       const eth = formatEther(BigInt(value));
       return textResponse(`${value} wei = ${eth} ETH`);
     } catch (error) {
@@ -416,8 +419,9 @@ server.tool(
     },
     required: ["address"],
   },
-  async ({ address }) => {
+  async (params) => {
     try {
+      const { address } = validateInput(IsAddressSchema, params);
       const valid = isAddress(address);
       return textResponse(valid ? "Valid address" : "Invalid address");
     } catch (error) {
@@ -439,8 +443,9 @@ server.tool(
     },
     required: ["data"],
   },
-  async ({ data }) => {
+  async (params) => {
     try {
+      const { data } = validateInput(Keccak256Schema, params);
       const hash = keccak256(toHex(data));
       return textResponse(`Hash: ${hash}`);
     } catch (error) {
