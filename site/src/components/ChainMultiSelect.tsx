@@ -1,11 +1,11 @@
 'use client'
+import * as Checkbox from '@radix-ui/react-checkbox'
 import {
+  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  CheckIcon,
 } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
-import * as Checkbox from '@radix-ui/react-checkbox'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useEffect, useState } from 'react'
 
@@ -96,9 +96,12 @@ export function ChainMultiSelect({
                   filteredChains.map((chain) => {
                     const isSelected = value.some((c) => c.id === chain.id)
                     return (
-                      <label
+                      <button
                         key={chain.id}
-                        className="flex items-center gap-3 p-2 hover:bg-[--viem-border] rounded cursor-pointer"
+                        aria-pressed={isSelected}
+                        className="flex items-center gap-3 p-2 hover:bg-[--viem-border] rounded cursor-pointer w-full text-left"
+                        onClick={() => toggleChain(chain)}
+                        type="button"
                       >
                         <Checkbox.Root
                           checked={isSelected}
@@ -115,7 +118,7 @@ export function ChainMultiSelect({
                             ({chain.id})
                           </span>
                         </span>
-                      </label>
+                      </button>
                     )
                   })
                 )}

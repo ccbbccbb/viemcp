@@ -3,6 +3,10 @@ node_modules/
 .pnp
 .pnp.js
 
+# misc
+CONSOLIDATED-TOOLS.md
+AUDIT.md
+
 # Build output
 build/
 dist/

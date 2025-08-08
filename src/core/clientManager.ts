@@ -21,7 +21,7 @@ export class ClientManager {
     // default to mainnet
     const chain: Chain | undefined = chainName
       ? SUPPORTED_CHAINS[chainName]
-      : SUPPORTED_CHAINS.mainnet
+      : SUPPORTED_CHAINS['mainnet']
     if (!chain) {
       throw new Error(
         `Unsupported chain: ${chainName}. Use 'listSupportedChains' to see available chains.`,

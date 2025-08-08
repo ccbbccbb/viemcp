@@ -59,7 +59,6 @@ const server = new McpServer(
   },
 )
 
-
 // Helper to stringify JSON with BigInt support (prefix underscore to avoid unused rule)
 function _toJsonString(data: unknown) {
   return JSON.stringify(

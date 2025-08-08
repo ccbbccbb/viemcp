@@ -61,7 +61,8 @@
         "useButtonType": "off"
       },
       "complexity": {
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        "useLiteralKeys": "off"
       },
       "correctness": {
         "noUnusedVariables": "error"

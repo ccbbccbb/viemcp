@@ -1,5 +1,7 @@
 'use client'
+import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
+import { SiNpm } from 'react-icons/si'
 import { ChainMultiSelect } from '@/components/ChainMultiSelect'
 import { ConfigForm } from '@/components/ConfigForm'
 
@@ -14,8 +16,27 @@ export default function Page() {
     <main className="relative z-[1] min-h-screen">
       <header className="mx-auto max-w-6xl px-6 py-8 flex items-center justify-between">
         <div className="text-xl font-semibold font-title">viemcp</div>
-        <nav className="text-sm text-[--viem-text-muted]">
-          MCP server for Viem
+        <nav className="flex items-center gap-4 text-sm text-[--viem-text-muted]">
+          <a
+            href="https://github.com/ccbbccbb/viemcp/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            className="hover:text-[--viem-text] transition-colors"
+            title="GitHub"
+          >
+            <GitHubLogoIcon className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.npmjs.com/package/viemcp"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="npm package"
+            className="hover:text-[--viem-text] transition-colors"
+            title="npm"
+          >
+            <SiNpm className="w-6 h-6" />
+          </a>
         </nav>
       </header>
 

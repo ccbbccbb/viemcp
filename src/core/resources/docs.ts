@@ -83,7 +83,8 @@ async function writeTreeCache(cache: TreeCache): Promise<void> {
 
 async function getDocsPathsWithCache(): Promise<string[]> {
   const branch = process.env['VIEM_DOCS_BRANCH'] || 'main'
-  const ttlMs = Number(process.env['VIEM_DOCS_TTL_MS_TREE']) || DEFAULT_TREE_TTL_MS
+  const ttlMs =
+    Number(process.env['VIEM_DOCS_TTL_MS_TREE']) || DEFAULT_TREE_TTL_MS
   const now = Date.now()
   const cached = await readTreeCache()
   if (cached && cached.branch === branch && now - cached.timestampMs <= ttlMs) {

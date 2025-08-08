@@ -192,7 +192,7 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
           <Accordion.Header>
             <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
               <h3 className="section-heading m-0">CUSTOM RPC URL</h3>
-              <ChevronDownIcon className="chevron w-4 h-4 text-[--viem-heading] transition-transform" />
+              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
@@ -249,7 +249,7 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
           <Accordion.Header>
             <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
               <h3 className="section-heading m-0">RPC PROVIDER</h3>
-              <ChevronDownIcon className="chevron w-4 h-4 text-[--viem-heading] transition-transform" />
+              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
@@ -265,27 +265,28 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                   { value: 'alchemy', label: 'Alchemy' },
                   { value: 'infura', label: 'Infura' },
                 ].map((opt) => (
-                  <div
+                  <RadioGroup.Item
                     key={opt.value}
-                    className="flex items-center gap-2 p-2 border rounded border-[--viem-border] cursor-pointer"
-                    onClick={() => setProvider(opt.value as typeof provider)}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setProvider(opt.value as typeof provider)
-                      }
-                    }}
+                    asChild
+                    value={opt.value as any}
                   >
-                    <RadioGroup.Item
-                      value={opt.value as any}
-                      className="h-4 w-4 rounded-full border border-[--viem-border] data-[state=checked]:border-[--viem-heading]"
+                    <button
+                      type="button"
+                      aria-pressed={provider === (opt.value as typeof provider)}
+                      className="flex items-center gap-2 p-2 border rounded border-[--viem-border] cursor-pointer text-left"
+                      onClick={() => setProvider(opt.value as typeof provider)}
                     >
-                      <RadioGroup.Indicator className="flex items-center justify-center">
-                        <span className="block h-2 w-2 rounded-full bg-[--viem-heading]" />
-                      </RadioGroup.Indicator>
-                    </RadioGroup.Item>
-                    <span className="text-sm">{opt.label}</span>
-                  </div>
+                      <span
+                        aria-hidden
+                        className="inline-flex items-center justify-center h-4 w-4 rounded-full border border-[--viem-border]"
+                      >
+                        {provider === (opt.value as typeof provider) ? (
+                          <span className="block h-2 w-2 rounded-full bg-[--viem-heading]" />
+                        ) : null}
+                      </span>
+                      <span className="text-sm">{opt.label}</span>
+                    </button>
+                  </RadioGroup.Item>
                 ))}
               </RadioGroup.Root>
             </div>

@@ -43,14 +43,14 @@ export function getRpcUrl(chainName: string): string | undefined {
       return genericUrl
     }
   }
-  
+
   // Fall back to default public RPC URLs if available
   const defaultUrl = DEFAULT_RPC_URLS[chainName.toLowerCase()]
   if (defaultUrl) {
     console.error(`Using default public RPC for ${chainName}: ${defaultUrl}`)
     return defaultUrl
   }
-  
+
   return undefined
 }
 
@@ -92,7 +92,7 @@ export function findChainByIdLocal(id: number): Chain | undefined {
 export async function resolveChainById(id: number): Promise<Chain | undefined> {
   try {
     const allowDynamic =
-      process.env.VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION !== 'false'
+      process.env['VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION'] !== 'false'
     if (!allowDynamic) {
       return undefined
     }
@@ -108,7 +108,7 @@ export async function resolveChainById(id: number): Promise<Chain | undefined> {
 }
 
 export function loadCustomChainsFromEnv() {
-  const raw = process.env.VIEM_CUSTOM_CHAINS
+  const raw = process.env['VIEM_CUSTOM_CHAINS']
   if (!raw) {
     return
   }
