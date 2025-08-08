@@ -83,78 +83,79 @@ All tool IDs are viem-prefixed. The server now prioritizes consolidated tools to
 ### Consolidated Tools
 
 - viemBlockInfo — Block header plus optional tx count/full txs
-  - args:
     ```ts
-    { numberOrTag?: string, includeTxCount?: boolean, includeFullTransactions?: boolean, chain?: string }
+    args: { numberOrTag?: string, includeTxCount?: boolean, includeFullTransactions?: boolean, chain?: string }
     ```
 - viemTransactionInfo — Transaction plus optional receipt/logs
-  - args:
     ```ts
-    { hash: string, includeReceipt?: boolean, includeLogs?: boolean, chain?: string }
+    args: { hash: string, includeReceipt?: boolean, includeLogs?: boolean, chain?: string }
     ```
 - viemAccountInfo — Account balance and optional nonce
-  - args:
     ```ts
-    { address: string, blockTag?: string, historicalBalanceAt?: string, includeNonce?: boolean, chain?: string }
+    args: { address: string, blockTag?: string, historicalBalanceAt?: string, includeNonce?: boolean, chain?: string }
     ```
 - viemGasInfo — Gas price and/or fee history
-  - args:
     ```ts
-    { includePrice?: boolean, history?: { blockCount?: string, newestBlock?: string, rewardPercentiles?: number[] }, chain?: string }
+    args: { includePrice?: boolean, history?: { blockCount?: string, newestBlock?: string, rewardPercentiles?: number[] }, chain?: string }
     ```
 - viemEnsInfo — Resolve ENS data for name/address (address, name, resolver, avatar, text records)
-  - args:
     ```ts
-    { lookupType: "name" | "address", value: string, includeAddress?: boolean, includeName?: boolean, includeResolver?: boolean, includeAvatar?: boolean, textKeys?: string[], chain?: string }
+    args: { lookupType: "name" | "address", value: string, includeAddress?: boolean, includeName?: boolean, includeResolver?: boolean, includeAvatar?: boolean, textKeys?: string[], chain?: string }
     ```
 - viemErc20Info — Combined ERC20 metadata/balance/allowance
-  - args:
     ```ts
-    { token: string, owner?: string, spender?: string, includeMetadata?: boolean, includeBalance?: boolean, includeAllowance?: boolean, chain?: string }
+    args: { token: string, owner?: string, spender?: string, includeMetadata?: boolean, includeBalance?: boolean, includeAllowance?: boolean, chain?: string }
     ```
 - viemContractState — Get contract code and/or storage slots
-  - args:
     ```ts
-    { address: string, slots?: string[], blockTag?: string, includeCode?: boolean, includeStorage?: boolean, chain?: string }
+    args: { address: string, slots?: string[], blockTag?: string, includeCode?: boolean, includeStorage?: boolean, chain?: string }
     ```
 - viemEncodeData — Encode function/deploy data
-  - args:
     ```ts
-    { mode: "function" | "deploy", abi: unknown[], functionName?: string, args?: unknown[], bytecode?: string, constructorArgs?: unknown[] }
+    args: { mode: "function" | "deploy", abi: unknown[], functionName?: string, args?: unknown[], bytecode?: string, constructorArgs?: unknown[] }
     ```
 - viemContractAction — Read/simulate/estimateGas for a function
-  - args:
     ```ts
-    { action: "read" | "simulate" | "estimateGas", address: string, abi: unknown[], functionName: string, args?: unknown[], account?: string, value?: string, blockTag?: string, chain?: string }
+    args: { action: "read" | "simulate" | "estimateGas", address: string, abi: unknown[], functionName: string, args?: unknown[], account?: string, value?: string, blockTag?: string, chain?: string }
     ```
 - viemTransactionBuild — Estimate gas or prepare tx
-  - args:
     ```ts
-    { mode: "estimateGas" | "prepare", from?: string, to?: string, data?: string, value?: string, gas?: string, maxFeePerGas?: string, maxPriorityFeePerGas?: string, gasPrice?: string, nonce?: string, chain?: string }
+    args: { mode: "estimateGas" | "prepare", from?: string, to?: string, data?: string, value?: string, gas?: string, maxFeePerGas?: string, maxPriorityFeePerGas?: string, gasPrice?: string, nonce?: string, chain?: string }
     ```
 - viemChainInfo — Chain id and optionally supported chains/RPC URL
-  - args:
     ```ts
-    { includeSupported?: boolean, includeRpcUrl?: boolean, chain?: string }
+    args: { includeSupported?: boolean, includeRpcUrl?: boolean, chain?: string }
     ```
 
 ### Public primitives
 
 - viemGetLogs — Filter logs by address/topics and range
-  - args: { address?: string, topics?: unknown[], fromBlock?: string, toBlock?: string, chain?: string }
+    ```ts
+    args: { address?: string, topics?: unknown[], fromBlock?: string, toBlock?: string, chain?: string }
+    ```
 - viemMulticall — Batch multiple contract reads
-  - args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
+    ```ts
+    args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
+    ```
 
 ### Utilities
 
 - viemParseEther — Convert ETH to wei
-  - args: { value: string }
+    ```ts
+    args: { value: string }
+    ```
 - viemFormatEther — Convert wei to ETH
-  - args: { value: string }
+    ```ts
+    args: { value: string }
+    ```
 - viemIsAddress — Validate Ethereum address
-  - args: { address: string }
+    ```ts
+    args: { address: string }
+    ```
 - viemKeccak256 — Hash data with Keccak256
-  - args: { data: string }
+    ```ts
+    args: { data: string }
+    ```
 
 ## Available Resources
 

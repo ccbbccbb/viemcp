@@ -1,107 +1,108 @@
-"use client";
-import { useMemo, useState } from "react";
-import { CodeBlock } from "./CodeBlock";
-import { ChevronDownIcon, ChevronRightIcon } from "@radix-ui/react-icons";
-type Chain = { id: number; name: string; slug: string };
+'use client'
+import { ChevronDownIcon, ChevronRightIcon } from '@radix-ui/react-icons'
+import { useMemo, useState } from 'react'
+import { CodeBlock } from './CodeBlock'
+
+type Chain = { id: number; name: string; slug: string }
 
 function buildClaudeCodeCmd(
   chains: Chain[],
   o: {
-    rpcUrl?: string;
-    customChainName?: string;
-    customChainId?: string;
-    alchemy?: string;
-    drpc?: string;
-    infura?: string;
-  }
+    rpcUrl?: string
+    customChainName?: string
+    customChainId?: string
+    alchemy?: string
+    drpc?: string
+    infura?: string
+  },
 ) {
-  const envs: string[] = [];
-  const defaultChainId = chains.length > 0 ? chains[0].id.toString() : "1";
+  const envs: string[] = []
+  const defaultChainId = chains.length > 0 ? chains[0].id.toString() : '1'
 
-  envs.push(`DEFAULT_CHAIN_ID=${defaultChainId}`);
+  envs.push(`DEFAULT_CHAIN_ID=${defaultChainId}`)
 
   if (o.drpc) {
-    envs.push(`RPC_PROVIDER=drpc`);
-    envs.push(`DRPC_API_KEY=${o.drpc}`);
+    envs.push(`RPC_PROVIDER=drpc`)
+    envs.push(`DRPC_API_KEY=${o.drpc}`)
     if (chains.some((c) => c.id === 1)) {
-      envs.push(`MAINNET_RPC_URL_DRPC=https://lb.drpc.org/ethereum/${o.drpc}`);
+      envs.push(`MAINNET_RPC_URL_DRPC=https://lb.drpc.org/ethereum/${o.drpc}`)
     }
   } else if (o.alchemy) {
-    envs.push(`RPC_PROVIDER=alchemy`);
-    envs.push(`ALCHEMY_API_KEY=${o.alchemy}`);
+    envs.push(`RPC_PROVIDER=alchemy`)
+    envs.push(`ALCHEMY_API_KEY=${o.alchemy}`)
   } else if (o.infura) {
-    envs.push(`RPC_PROVIDER=infura`);
-    envs.push(`INFURA_API_KEY=${o.infura}`);
+    envs.push(`RPC_PROVIDER=infura`)
+    envs.push(`INFURA_API_KEY=${o.infura}`)
   }
 
   if (o.rpcUrl && o.customChainName && o.customChainId) {
-    envs.push(`CUSTOM_RPC_URL=${o.rpcUrl}`);
-    envs.push(`CUSTOM_CHAIN_NAME=${o.customChainName}`);
-    envs.push(`CUSTOM_CHAIN_ID=${o.customChainId}`);
+    envs.push(`CUSTOM_RPC_URL=${o.rpcUrl}`)
+    envs.push(`CUSTOM_CHAIN_NAME=${o.customChainName}`)
+    envs.push(`CUSTOM_CHAIN_ID=${o.customChainId}`)
   }
 
   // Single line command
-  return `claude mcp add viemcp${envs.length ? " -e " + envs.join(" ") : ""} -- npx -y viemcp`;
+  return `claude mcp add viemcp${envs.length ? ` -e ${envs.join(' ')}` : ''} -- npx -y viemcp`
 }
 
 function buildCursorConfig(
   chains: Chain[],
   o: {
-    rpcUrl?: string;
-    customChainName?: string;
-    customChainId?: string;
-    alchemy?: string;
-    drpc?: string;
-    infura?: string;
-  }
+    rpcUrl?: string
+    customChainName?: string
+    customChainId?: string
+    alchemy?: string
+    drpc?: string
+    infura?: string
+  },
 ) {
-  const env: Record<string, string> = {};
-  const defaultChainId = chains.length > 0 ? chains[0].id.toString() : "1";
+  const env: Record<string, string> = {}
+  const defaultChainId = chains.length > 0 ? chains[0].id.toString() : '1'
 
-  env.DEFAULT_CHAIN_ID = defaultChainId;
+  env.DEFAULT_CHAIN_ID = defaultChainId
 
   if (o.drpc) {
-    env.RPC_PROVIDER = "drpc";
-    env.DRPC_API_KEY = o.drpc;
+    env.RPC_PROVIDER = 'drpc'
+    env.DRPC_API_KEY = o.drpc
     if (chains.some((c) => c.id === 1)) {
-      env.MAINNET_RPC_URL_DRPC = `https://lb.drpc.org/ethereum/${o.drpc}`;
+      env.MAINNET_RPC_URL_DRPC = `https://lb.drpc.org/ethereum/${o.drpc}`
     }
   } else if (o.alchemy) {
-    env.RPC_PROVIDER = "alchemy";
-    env.ALCHEMY_API_KEY = o.alchemy;
+    env.RPC_PROVIDER = 'alchemy'
+    env.ALCHEMY_API_KEY = o.alchemy
   } else if (o.infura) {
-    env.RPC_PROVIDER = "infura";
-    env.INFURA_API_KEY = o.infura;
+    env.RPC_PROVIDER = 'infura'
+    env.INFURA_API_KEY = o.infura
   }
 
   if (o.rpcUrl && o.customChainName && o.customChainId) {
-    env.CUSTOM_RPC_URL = o.rpcUrl;
-    env.CUSTOM_CHAIN_NAME = o.customChainName;
-    env.CUSTOM_CHAIN_ID = o.customChainId;
+    env.CUSTOM_RPC_URL = o.rpcUrl
+    env.CUSTOM_CHAIN_NAME = o.customChainName
+    env.CUSTOM_CHAIN_ID = o.customChainId
   }
 
   return JSON.stringify(
     {
       viemcp: {
-        command: "npx",
-        args: ["-y", "viemcp"],
+        command: 'npx',
+        args: ['-y', 'viemcp'],
         env: env,
       },
     },
     null,
-    2
-  );
+    2,
+  )
 }
 
 export function ConfigForm({ selected }: { selected: Chain[] }) {
-  const [rpcUrl, setRpcUrl] = useState("");
-  const [customChainName, setCustomChainName] = useState("");
-  const [customChainId, setCustomChainId] = useState("");
-  const [alchemy, setAlchemy] = useState("");
-  const [drpc, setDrpc] = useState("");
-  const [infura, setInfura] = useState("");
-  const [showCustomRpc, setShowCustomRpc] = useState(false);
-  const [showApiKeys, setShowApiKeys] = useState(false);
+  const [rpcUrl, setRpcUrl] = useState('')
+  const [customChainName, setCustomChainName] = useState('')
+  const [customChainId, setCustomChainId] = useState('')
+  const [alchemy, setAlchemy] = useState('')
+  const [drpc, setDrpc] = useState('')
+  const [infura, setInfura] = useState('')
+  const [showCustomRpc, setShowCustomRpc] = useState(false)
+  const [showApiKeys, setShowApiKeys] = useState(false)
 
   const cursorCfg = useMemo(
     () =>
@@ -113,8 +114,8 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
         drpc,
         infura,
       }),
-    [selected, rpcUrl, customChainName, customChainId, alchemy, drpc, infura]
-  );
+    [selected, rpcUrl, customChainName, customChainId, alchemy, drpc, infura],
+  )
   const claudeCmd = useMemo(
     () =>
       buildClaudeCodeCmd(selected, {
@@ -125,8 +126,8 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
         drpc,
         infura,
       }),
-    [selected, rpcUrl, customChainName, customChainId, alchemy, drpc, infura]
-  );
+    [selected, rpcUrl, customChainName, customChainId, alchemy, drpc, infura],
+  )
 
   return (
     <section className="space-y-8">
@@ -149,8 +150,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
             {showCustomRpc && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">RPC URL</label>
+                  <label
+                    htmlFor="rpc-url"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
+                    RPC URL
+                  </label>
                   <input
+                    id="rpc-url"
                     className="input-field w-full"
                     placeholder="https://rpc.example.org"
                     value={rpcUrl}
@@ -158,8 +165,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">Chain Name</label>
+                  <label
+                    htmlFor="custom-chain-name"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
+                    Chain Name
+                  </label>
                   <input
+                    id="custom-chain-name"
                     className="input-field w-full"
                     placeholder="my-chain"
                     value={customChainName}
@@ -167,8 +180,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">Chain ID</label>
+                  <label
+                    htmlFor="custom-chain-id"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
+                    Chain ID
+                  </label>
                   <input
+                    id="custom-chain-id"
                     className="input-field w-full"
                     placeholder="1337"
                     value={customChainId}
@@ -198,10 +217,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
             {showApiKeys && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">
+                  <label
+                    htmlFor="alchemy-key"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
                     Alchemy API Key
                   </label>
                   <input
+                    id="alchemy-key"
                     className="input-field w-full"
                     placeholder="YOUR-API-KEY"
                     value={alchemy}
@@ -209,10 +232,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">
+                  <label
+                    htmlFor="drpc-key"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
                     DRPC API Key
                   </label>
                   <input
+                    id="drpc-key"
                     className="input-field w-full"
                     placeholder="YOUR-API-KEY"
                     value={drpc}
@@ -220,10 +247,14 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-[--viem-text-muted] mb-2">
+                  <label
+                    htmlFor="infura-key"
+                    className="block text-sm text-[--viem-text-muted] mb-2"
+                  >
                     Infura API Key
                   </label>
                   <input
+                    id="infura-key"
                     className="input-field w-full"
                     placeholder="YOUR-API-KEY"
                     value={infura}
@@ -241,5 +272,5 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
         <CodeBlock title="Cursor MCP Config" code={cursorCfg} />
       </div>
     </section>
-  );
+  )
 }

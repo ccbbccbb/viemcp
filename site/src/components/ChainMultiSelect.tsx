@@ -1,66 +1,79 @@
-"use client";
-import { useEffect, useState, useRef } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
-type Chain = { id: number; name: string; slug: string };
+'use client'
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons'
+import { useEffect, useRef, useState } from 'react'
+
+type Chain = { id: number; name: string; slug: string }
 
 export function ChainMultiSelect({
   value,
   onChange,
 }: {
-  value: Chain[];
-  onChange: (chains: Chain[]) => void;
+  value: Chain[]
+  onChange: (chains: Chain[]) => void
 }) {
-  const [chains, setChains] = useState<Chain[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [chains, setChains] = useState<Chain[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch("/chains.json")
+    fetch('/chains.json')
       .then((r) => r.json())
       .then(setChains)
-      .catch(() => setChains([]));
-  }, []);
+      .catch(() => setChains([]))
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const filteredChains = chains.filter(
-    (c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.id.toString().includes(search)
-  );
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.id.toString().includes(search),
+  )
 
   const toggleChain = (chain: Chain) => {
     if (value.some((c) => c.id === chain.id)) {
-      onChange(value.filter((c) => c.id !== chain.id));
+      onChange(value.filter((c) => c.id !== chain.id))
     } else {
-      onChange([...value, chain]);
+      onChange([...value, chain])
     }
-  };
+  }
 
   const displayText =
     value.length === 0
-      ? "Select networks"
+      ? 'Select networks'
       : value.length === 1
         ? value[0].name
-        : `${value.length} networks selected`;
+        : `${value.length} networks selected`
 
   return (
     <div className="relative" ref={dropdownRef}>
       <div className="flex items-center gap-4">
-        <label className="section-heading m-0">Supported Networks</label>
+        <label className="section-heading m-0" htmlFor="multi-chain-button">
+          Supported Networks
+        </label>
         <button
+          id="multi-chain-button"
           onClick={() => setIsOpen(!isOpen)}
           className="dropdown flex items-center justify-between min-w-[200px]"
         >
           <span className="text-sm">{displayText}</span>
-          {isOpen ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+          {isOpen ? (
+            <ChevronUpIcon className="w-4 h-4" />
+          ) : (
+            <ChevronDownIcon className="w-4 h-4" />
+          )}
         </button>
       </div>
 
@@ -84,7 +97,7 @@ export function ChainMultiSelect({
               </div>
             ) : (
               filteredChains.map((chain) => {
-                const isSelected = value.some((c) => c.id === chain.id);
+                const isSelected = value.some((c) => c.id === chain.id)
                 return (
                   <label
                     key={chain.id}
@@ -97,10 +110,13 @@ export function ChainMultiSelect({
                       className="cursor-pointer"
                     />
                     <span className="text-sm flex-1">
-                      {chain.name} <span className="text-[--viem-text-muted]">({chain.id})</span>
+                      {chain.name}{' '}
+                      <span className="text-[--viem-text-muted]">
+                        ({chain.id})
+                      </span>
                     </span>
                   </label>
-                );
+                )
               })
             )}
           </div>
@@ -118,5 +134,5 @@ export function ChainMultiSelect({
         </div>
       )}
     </div>
-  );
+  )
 }

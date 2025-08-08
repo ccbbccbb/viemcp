@@ -1,0 +1,100 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "src/**/*",
+      "tests/**/*",
+      "site/src/**/*",
+      "site/scripts/**/*",
+      "vitest.config.ts",
+      "package.json",
+      "biome.json",
+      "tsconfig.json",
+      "README.md"
+    ],
+    "ignoreUnknown": false,
+    "maxSize": 2097152,
+    "experimentalScannerIgnores": [
+      "build",
+      "build/**/*",
+      "_cjs",
+      "_esm",
+      "_types",
+      ".cache",
+      ".next",
+      ".svelte-kit",
+      ".vercel",
+      "**/node_modules",
+      "CHANGELOG.md",
+      "bun.lockb",
+      "bun.lock",
+      "cache",
+      "coverage",
+      "generated.ts",
+      "tsconfig.json",
+      "tsconfig.*.json",
+      "vectors/*.json",
+      "vectors/**/*.test.ts",
+      "wagmi",
+      "site/.next",
+      "site/.next/**/*",
+      "site/dist",
+      "site/next-env.d.ts",
+      "site/*.tsbuildinfo",
+      ".prettierrc.json",
+      ".claude/**/*",
+      "site/styles/vocs.config.tsx"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useButtonType": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "error"
+      },
+      "performance": {
+        "noBarrelFile": "error",
+        "noReExportAll": "error",
+        "noDelete": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useConsistentArrayType": "error"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "off",
+        "noConfusingVoidType": "off",
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": ["warn", "error"]
+          }
+        },
+        "noExplicitAny": "off",
+        "noRedeclare": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded"
+    }
+  }
+}
