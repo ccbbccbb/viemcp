@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ClientManager } from "../clientManager.js";
-import { jsonResponse, handleError, textResponse } from "../responses.js";
+import { jsonResponse, handleError } from "../responses.js";
 import { isAddress, type Address, type Hash, formatEther, erc20Abi } from "viem";
 
 export function registerConsolidatedTools(server: McpServer, clientManager: ClientManager) {
@@ -628,20 +628,5 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // Standalone names for clarity
-  server.tool(
-    "viemGetLogs",
-    "Alias of getLogs (kept standalone due to flexible filter surface)",
-    { type: "object", properties: {}, required: [] },
-    async () =>
-      textResponse("Use getLogs with desired filters; alias provided for naming consistency.")
-  );
-
-  server.tool(
-    "viemMulticall",
-    "Alias of multicall (batch read-only calls)",
-    { type: "object", properties: {}, required: [] },
-    async () =>
-      textResponse("Use multicall with contracts array; alias provided for naming consistency.")
-  );
+  // Standalone alias notes no longer needed since all tools are viem-prefixed
 }

@@ -6,7 +6,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 export function registerPublicTools(server: McpServer, clientManager: ClientManager) {
   server.tool(
-    "getTransactionCount",
+    "viemGetTransactionCount",
     "Get the nonce (transaction count) for an address",
     {
       type: "object",
@@ -35,7 +35,7 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
   );
 
   server.tool(
-    "getBlockTransactionCount",
+    "viemGetBlockTransactionCount",
     "Get number of transactions in a block",
     {
       type: "object",
@@ -70,7 +70,7 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
   );
 
   server.tool(
-    "getLogs",
+    "viemGetLogs",
     "Get logs by address/topics and block range",
     {
       type: "object",
@@ -113,7 +113,7 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
   );
 
   server.tool(
-    "getFeeHistory",
+    "viemGetFeeHistory",
     "Get EIP-1559 fee history",
     {
       type: "object",

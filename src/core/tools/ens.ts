@@ -5,7 +5,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 export function registerEnsTools(server: McpServer, clientManager: ClientManager) {
   server.tool(
-    "getEnsResolver",
+    "viemGetEnsResolver",
     "Get ENS resolver for a name",
     {
       type: "object",

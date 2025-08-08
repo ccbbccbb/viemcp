@@ -56,170 +56,15 @@ const server = new McpServer(
 );
 
 // Additional read-only tools (Public Actions)
-server.tool(
-  "getTransactionCount",
-  "Get the nonce (transaction count) for an address",
-  {
-    type: "object",
-    properties: {
-      address: { type: "string", description: "Ethereum address" },
-      blockTag: { type: "string", description: "Block tag (latest, pending, etc.)" },
-      chain: { type: "string", description: "Chain to query" },
-    },
-    required: ["address"],
-  },
-  async ({ address, blockTag, chain }) => {
-    try {
-      if (!isAddress(address)) {
-        throw new Error("Invalid address");
-      }
-      const client = clientManager.getClient(chain);
-      const count = await client.getTransactionCount({
-        address: address as Address,
-        blockTag: blockTag as never,
-      });
-      return jsonResponse({ address, nonce: count, chain: client.chain?.name });
-    } catch (error) {
-      return handleError(error);
-    }
-  }
-);
+// Note: Duplicates of public tools are removed. These are registered via registerPublicTools().
 
-server.tool(
-  "getBlockTransactionCount",
-  "Get number of transactions in a block",
-  {
-    type: "object",
-    properties: {
-      numberOrTag: { type: "string", description: "Block number (decimal/hex) or tag" },
-      chain: { type: "string", description: "Chain to query" },
-    },
-    required: ["numberOrTag"],
-  },
-  async ({ numberOrTag, chain }) => {
-    try {
-      const client = clientManager.getClient(chain);
-      const input = (numberOrTag ?? "").trim().toLowerCase();
-      if (!input) {
-        throw new Error("'numberOrTag' is required");
-      }
-      const tagSet = new Set(["latest", "earliest", "pending"]);
-      let count: number;
-      if (tagSet.has(input)) {
-        count = await client.getBlockTransactionCount({ blockTag: input as never });
-      } else {
-        if (!/^\d+$/.test(input) && !/^0x[0-9a-fA-F]+$/.test(input)) {
-          throw new Error("Invalid block number");
-        }
-        count = await client.getBlockTransactionCount({ blockNumber: BigInt(input) });
-      }
-      return jsonResponse({ numberOrTag, count, chain: client.chain?.name });
-    } catch (error) {
-      return handleError(error);
-    }
-  }
-);
+// getBlockTransactionCount is registered via registerPublicTools()
 
-server.tool(
-  "getLogs",
-  "Get logs by address/topics and block range",
-  {
-    type: "object",
-    properties: {
-      address: { type: "string", description: "Contract address (optional)" },
-      topics: { type: "array", description: "Array of topics (optional)" },
-      fromBlock: { type: "string", description: "From block (tag or number)" },
-      toBlock: { type: "string", description: "To block (tag or number)" },
-      chain: { type: "string", description: "Chain to query" },
-    },
-    required: [],
-  },
-  async ({ address, topics, fromBlock, toBlock, chain }) => {
-    try {
-      const client = clientManager.getClient(chain);
-      const params: Record<string, unknown> = {};
-      if (address) {
-        if (!isAddress(address)) {
-          throw new Error("Invalid address");
-        }
-        params["address"] = address as Address;
-      }
-      if (Array.isArray(topics)) {
-        params["topics"] = topics as unknown[];
-      }
-      const parseBlock = (v?: string) =>
-        v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never);
-      if (fromBlock) {
-        params["fromBlock"] = parseBlock(fromBlock);
-      }
-      if (toBlock) {
-        params["toBlock"] = parseBlock(toBlock);
-      }
-      const logs = await client.getLogs(params as never);
-      return jsonResponse({ count: logs.length, logs });
-    } catch (error) {
-      return handleError(error);
-    }
-  }
-);
+// getLogs is registered via registerPublicTools()
 
-server.tool(
-  "getFeeHistory",
-  "Get EIP-1559 fee history",
-  {
-    type: "object",
-    properties: {
-      blockCount: { type: "string", description: "Number of blocks" },
-      newestBlock: { type: "string", description: "Newest block tag or number" },
-      rewardPercentiles: { type: "array", description: "Optional reward percentiles" },
-      chain: { type: "string", description: "Chain to query" },
-    },
-    required: ["blockCount", "newestBlock"],
-  },
-  async ({ blockCount, newestBlock, rewardPercentiles, chain }) => {
-    try {
-      const client = clientManager.getClient(chain);
-      const count = Number(blockCount);
-      if (!Number.isFinite(count) || count <= 0) {
-        throw new Error("Invalid blockCount");
-      }
-      const nb = /^latest|earliest|pending$/.test(newestBlock)
-        ? (newestBlock as never)
-        : (BigInt(newestBlock) as never);
-      const rewards = Array.isArray(rewardPercentiles) ? (rewardPercentiles as number[]) : [];
-      const history = await client.getFeeHistory({
-        blockCount: count,
-        rewardPercentiles: rewards,
-        blockTag: nb,
-      });
-      return jsonResponse(history);
-    } catch (error) {
-      return handleError(error);
-    }
-  }
-);
+// getFeeHistory is registered via registerPublicTools()
 
-server.tool(
-  "getEnsResolver",
-  "Get ENS resolver for a name",
-  {
-    type: "object",
-    properties: {
-      name: { type: "string", description: "ENS name" },
-      chain: { type: "string", description: "Chain (mainnet typically)" },
-    },
-    required: ["name"],
-  },
-  async ({ name, chain }) => {
-    try {
-      const client = clientManager.getClient(chain ?? "ethereum");
-      const resolver = await client.getEnsResolver({ name });
-      return jsonResponse({ name, resolver });
-    } catch (error) {
-      return handleError(error);
-    }
-  }
-);
+// getEnsResolver is registered via registerEnsTools()
 // Helper functions moved to core/responses
 
 // Helper to stringify JSON with BigInt support (prefix underscore to avoid unused rule)
@@ -233,7 +78,7 @@ function _toJsonString(data: unknown) {
 
 // Core Blockchain Tools
 server.tool(
-  "getBalance",
+  "viemGetBalance",
   "Get native token balance for an address",
   {
     type: "object",
@@ -271,7 +116,7 @@ server.tool(
 );
 
 server.tool(
-  "getBlockNumber",
+  "viemGetBlockNumber",
   "Get current block number",
   {
     type: "object",
@@ -296,7 +141,7 @@ server.tool(
 );
 
 server.tool(
-  "getTransaction",
+  "viemGetTransaction",
   "Get transaction details",
   {
     type: "object",
@@ -339,7 +184,7 @@ server.tool(
 
 // Contract Tools
 server.tool(
-  "readContract",
+  "viemReadContract",
   "Read from smart contract",
   {
     type: "object",
@@ -391,7 +236,7 @@ server.tool(
 
 // Token Tools
 server.tool(
-  "getERC20Balance",
+  "viemGetERC20Balance",
   "Get ERC20 token balance",
   {
     type: "object",
@@ -455,7 +300,7 @@ server.tool(
 
 // ENS Tools
 server.tool(
-  "resolveEnsAddress",
+  "viemResolveEnsAddress",
   "Resolve ENS name to address. Optionally include avatar and specific text records.",
   {
     type: "object",
@@ -513,7 +358,7 @@ server.tool(
 
 // Utility Tools
 server.tool(
-  "parseEther",
+  "viemParseEther",
   "Convert ETH to wei",
   {
     type: "object",
@@ -536,7 +381,7 @@ server.tool(
 );
 
 server.tool(
-  "formatEther",
+  "viemFormatEther",
   "Convert wei to ETH",
   {
     type: "object",
@@ -559,7 +404,7 @@ server.tool(
 );
 
 server.tool(
-  "isAddress",
+  "viemIsAddress",
   "Validate Ethereum address",
   {
     type: "object",
@@ -582,7 +427,7 @@ server.tool(
 );
 
 server.tool(
-  "keccak256",
+  "viemKeccak256",
   "Hash data with Keccak256",
   {
     type: "object",
@@ -606,7 +451,7 @@ server.tool(
 
 // Multi-chain Tools
 server.tool(
-  "listSupportedChains",
+  "viemListSupportedChains",
   "List supported chains",
   {
     type: "object",
@@ -627,7 +472,7 @@ server.tool(
 
 // Tranche 1 — Core public actions
 server.tool(
-  "getBlock",
+  "viemGetBlock",
   "Get block by number or tag",
   {
     type: "object",
@@ -686,7 +531,7 @@ server.tool(
 );
 
 server.tool(
-  "getTransactionReceipt",
+  "viemGetTransactionReceipt",
   "Get transaction receipt by hash",
   {
     type: "object",
@@ -715,7 +560,7 @@ server.tool(
 );
 
 server.tool(
-  "getGasPrice",
+  "viemGetGasPrice",
   "Get current gas price",
   {
     type: "object",
@@ -737,7 +582,7 @@ server.tool(
 );
 
 server.tool(
-  "estimateGas",
+  "viemEstimateGas",
   "Estimate gas for a transaction request",
   {
     type: "object",
@@ -787,7 +632,7 @@ server.tool(
 );
 
 server.tool(
-  "getChainId",
+  "viemGetChainId",
   "Get chain ID",
   {
     type: "object",
@@ -809,7 +654,7 @@ server.tool(
 
 // Tranche 2 — Contract operations
 server.tool(
-  "simulateContract",
+  "viemSimulateContract",
   "Simulate a contract call (no state change)",
   {
     type: "object",
@@ -857,7 +702,7 @@ server.tool(
 );
 
 server.tool(
-  "estimateContractGas",
+  "viemEstimateContractGas",
   "Estimate gas for a contract call",
   {
     type: "object",
@@ -905,7 +750,7 @@ server.tool(
 );
 
 server.tool(
-  "multicall",
+  "viemMulticall",
   "Batch multiple contract reads (no state change)",
   {
     type: "object",
@@ -964,7 +809,7 @@ server.tool(
 );
 
 server.tool(
-  "getCode",
+  "viemGetCode",
   "Get contract bytecode at an address",
   {
     type: "object",
@@ -989,7 +834,7 @@ server.tool(
 );
 
 server.tool(
-  "getStorageAt",
+  "viemGetStorageAt",
   "Read raw storage slot at an address",
   {
     type: "object",
@@ -1029,7 +874,7 @@ server.tool(
 
 // Tranche 3 — ERC20
 server.tool(
-  "getERC20Metadata",
+  "viemGetERC20Metadata",
   "Get ERC20 token metadata (name, symbol, decimals)",
   {
     type: "object",
@@ -1066,7 +911,7 @@ server.tool(
 );
 
 server.tool(
-  "getERC20Allowance",
+  "viemGetERC20Allowance",
   "Get ERC20 allowance (spender allowance granted by owner)",
   {
     type: "object",
@@ -1105,7 +950,7 @@ server.tool(
 
 // Tranche 4 — ENS
 server.tool(
-  "getEnsName",
+  "viemGetEnsName",
   "Reverse resolve an address to ENS name",
   {
     type: "object",
@@ -1133,7 +978,7 @@ server.tool(
 
 // Tranche 5 — Tx prep / encoding
 server.tool(
-  "prepareTransactionRequest",
+  "viemPrepareTransactionRequest",
   "Prepare a transaction request (no signing)",
   {
     type: "object",
@@ -1217,7 +1062,7 @@ server.tool(
 );
 
 server.tool(
-  "encodeFunctionData",
+  "viemEncodeFunctionData",
   "Encode function call data for a contract",
   {
     type: "object",
@@ -1239,7 +1084,7 @@ server.tool(
 );
 
 server.tool(
-  "encodeDeployData",
+  "viemEncodeDeployData",
   "Encode deployment data for a contract",
   {
     type: "object",
