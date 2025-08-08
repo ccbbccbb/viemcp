@@ -1,7 +1,16 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ClientManager } from "../clientManager.js";
 import { jsonResponse, handleError } from "../responses.js";
-import { isAddress, type Address, type Hash, formatEther, erc20Abi } from "viem";
+import {
+  isAddress,
+  type Address,
+  type Hash,
+  type Abi,
+  type BlockTag,
+  formatEther,
+  erc20Abi,
+  toHex,
+} from "viem";
 import {
   validateInput,
   BlockInfoSchema,
@@ -22,7 +31,53 @@ import {
  * Each tool groups a set of related read-only EVM actions behind one interface.
  * Input validation uses Zod schemas from `src/core/validation.ts`.
  */
+import type {
+  GasInfoOutput,
+  EnsInfoOutput,
+  Erc20InfoOutput,
+  ContractStateOutput,
+  ChainInfoOutput,
+} from "../types.js";
+
 export function registerConsolidatedTools(server: McpServer, clientManager: ClientManager) {
+  function isBlockTag(value: string): value is BlockTag {
+    return value === "latest" || value === "earliest" || value === "pending";
+  }
+
+  async function getBalanceAt(
+    client: ReturnType<ClientManager["getClient"]>,
+    address: Address,
+    tagOrNumber?: string
+  ): Promise<bigint> {
+    const v = (tagOrNumber ?? "latest").trim().toLowerCase();
+    if (isBlockTag(v)) {
+      return client.getBalance({ address, blockTag: v });
+    }
+    // Raw RPC for historical number
+    const blockParam = /^0x/i.test(v) ? (v as `0x${string}`) : (toHex(BigInt(v)) as `0x${string}`);
+    const hex = (await client.request({
+      method: "eth_getBalance",
+      params: [address, blockParam],
+    })) as `0x${string}`;
+    return BigInt(hex);
+  }
+
+  async function getNonceAt(
+    client: ReturnType<ClientManager["getClient"]>,
+    address: Address,
+    tagOrNumber?: string
+  ): Promise<number> {
+    const v = (tagOrNumber ?? "latest").trim().toLowerCase();
+    if (isBlockTag(v)) {
+      return client.getTransactionCount({ address, blockTag: v });
+    }
+    const blockParam = /^0x/i.test(v) ? (v as `0x${string}`) : (toHex(BigInt(v)) as `0x${string}`);
+    const hex = (await client.request({
+      method: "eth_getTransactionCount",
+      params: [address, blockParam],
+    })) as `0x${string}`;
+    return Number(hex);
+  }
   // viemBlockInfo — combined view of block header, optional tx count, optional full transactions
   server.tool(
     "viemBlockInfo",
@@ -51,11 +106,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         );
         const client = clientManager.getClient(chain);
         const input = (numberOrTag ?? "latest").trim().toLowerCase();
-        const tagSet = new Set(["latest", "earliest", "pending"]);
-        const isTag = tagSet.has(input);
+        const isTag = isBlockTag(input);
         const block = isTag
           ? await client.getBlock({
-              blockTag: input as never,
+              blockTag: input as BlockTag,
               includeTransactions: Boolean(includeFullTransactions),
             })
           : await client.getBlock({
@@ -65,7 +119,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         let transactionCount: number | undefined = undefined;
         if (includeTxCount) {
           transactionCount = isTag
-            ? await client.getBlockTransactionCount({ blockTag: input as never })
+            ? await client.getBlockTransactionCount({ blockTag: input as BlockTag })
             : await client.getBlockTransactionCount({ blockNumber: BigInt(input) });
         }
         return jsonResponse({ block, transactionCount });
@@ -106,8 +160,8 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           const r = await client.getTransactionReceipt({ hash: hash as Hash });
           receipt = r;
           if (includeLogs) {
-            const candidate: unknown = (r as unknown as { logs?: unknown[] }).logs;
-            logs = Array.isArray(candidate) ? candidate : [];
+            const withLogs = r as { logs?: unknown[] };
+            logs = Array.isArray(withLogs.logs) ? withLogs.logs : [];
           }
         }
         return jsonResponse({ transaction: tx, receipt, logs });
@@ -142,16 +196,14 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           params
         );
         const client = clientManager.getClient(chain);
-        const balance = await client.getBalance({
-          address: address as Address,
-          blockTag: (historicalBalanceAt ?? blockTag) as never,
-        });
+        const balance = await getBalanceAt(
+          client,
+          address as Address,
+          historicalBalanceAt ?? blockTag
+        );
         let nonce: number | undefined;
         if (includeNonce) {
-          nonce = await client.getTransactionCount({
-            address: address as Address,
-            blockTag: blockTag as never,
-          });
+          nonce = await getNonceAt(client, address as Address, blockTag);
         }
         return jsonResponse({
           address,
@@ -190,24 +242,29 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       try {
         const { includePrice, history, chain } = validateInput(GasInfoSchema, params);
         const client = clientManager.getClient(chain);
-        const out: Record<string, unknown> = {};
+        const out: GasInfoOutput = {};
         if (includePrice !== false) {
           const price = await client.getGasPrice();
           out["price"] = { wei: price.toString() };
         }
         if (history && history.blockCount && history.newestBlock) {
           const count = Number(history.blockCount);
-          const newest = /^latest|earliest|pending$/.test(history.newestBlock)
-            ? (history.newestBlock as never)
-            : (BigInt(history.newestBlock) as never);
           const rewards = Array.isArray(history.rewardPercentiles)
             ? (history.rewardPercentiles as number[])
             : [];
-          out["feeHistory"] = await client.getFeeHistory({
-            blockCount: count,
-            blockTag: newest,
-            rewardPercentiles: rewards,
-          });
+          if (isBlockTag(String(history.newestBlock))) {
+            out["feeHistory"] = await client.getFeeHistory({
+              blockCount: count,
+              blockTag: String(history.newestBlock) as BlockTag,
+              rewardPercentiles: rewards,
+            });
+          } else {
+            out["feeHistory"] = await client.getFeeHistory({
+              blockCount: count,
+              blockNumber: BigInt(String(history.newestBlock)),
+              rewardPercentiles: rewards,
+            });
+          }
         }
         return jsonResponse(out);
       } catch (error) {
@@ -247,7 +304,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           chain,
         } = validateInput(EnsInfoSchema, params);
         const client = clientManager.getClient(chain ?? "ethereum");
-        const out: Record<string, unknown> = { lookupType };
+        const out: EnsInfoOutput = { lookupType };
         if (lookupType === "name") {
           const address =
             includeAddress !== false ? await client.getEnsAddress({ name: value }) : undefined;
@@ -271,9 +328,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           if (!isAddress(value)) {
             throw new Error("Invalid address");
           }
-          out["name"] = includeName
-            ? await client.getEnsName({ address: value as Address })
-            : undefined;
+          if (includeName) {
+            out["name"] = (await client.getEnsName({ address: value as Address })) ?? null;
+          }
         } else {
           throw new Error("lookupType must be 'name' or 'address'");
         }
@@ -306,7 +363,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
         const { token, owner, spender, includeMetadata, includeBalance, includeAllowance, chain } =
           validateInput(Erc20InfoSchema, params);
         const client = clientManager.getClient(chain);
-        const out: Record<string, unknown> = { token };
+        const out: Erc20InfoOutput = { token };
         if (includeMetadata !== false) {
           const [name, symbol, decimals] = await Promise.all([
             client
@@ -388,11 +445,11 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           params
         );
         const client = clientManager.getClient(chain);
-        const out: Record<string, unknown> = { address };
+        const out: ContractStateOutput = { address };
         if (includeCode !== false) {
           out["code"] = await client.getCode({
             address: address as Address,
-            blockTag: blockTag as never,
+            blockTag: blockTag as BlockTag | undefined,
           });
         }
         if (includeStorage && Array.isArray(slots) && slots.length) {
@@ -404,10 +461,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
             }
             const v = await client.getStorageAt({
               address: address as Address,
-              slot: BigInt(input) as unknown as `0x${string}`,
-              blockTag: blockTag as never,
+              slot: (/^0x/i.test(input) ? (input as `0x${string}`) : (toHex(BigInt(input)) as `0x${string}`)),
+              blockTag: blockTag as BlockTag | undefined,
             });
-            result[input] = v as unknown as string;
+            result[input] = String(v);
           }
           out["storage"] = result;
         }
@@ -486,34 +543,43 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     },
     async (params) => {
       try {
-        const { action, address, abi, functionName, args, account, value, blockTag, chain } =
+        const { action, address, abi, functionName, args, account, value: _value, blockTag, chain } =
           validateInput(ContractActionSchema, params);
         const client = clientManager.getClient(chain);
-        const req: Record<string, unknown> = {
-          address: address as Address,
-          abi,
-          functionName,
-          args: Array.isArray(args) ? args : [],
-        };
-        if (account) {
-          req["account"] = account as Address;
-        }
-        if (value) {
-          req["value"] = BigInt(value);
-        }
-        if (blockTag) {
-          req["blockTag"] = blockTag as never;
-        }
+        const abiTyped = abi as Abi;
         if (action === "read") {
-          const result = await client.readContract(req as never);
+          const readParams = {
+            address: address as Address,
+            abi: abiTyped,
+            functionName,
+            args: Array.isArray(args) ? (args as readonly unknown[]) : [],
+            blockTag: blockTag as BlockTag | undefined,
+          } satisfies Parameters<typeof client.readContract>[0];
+          const result = await client.readContract(readParams);
           return jsonResponse({ result });
         }
         if (action === "simulate") {
-          const result = await client.simulateContract(req as never);
+          const simParams = {
+            address: address as Address,
+            abi: abiTyped,
+            functionName,
+            args: Array.isArray(args) ? (args as readonly unknown[]) : [],
+            account: (account as Address) || undefined,
+            blockTag: blockTag as BlockTag | undefined,
+          } satisfies Parameters<typeof client.simulateContract>[0];
+          const result = await client.simulateContract(simParams);
           return jsonResponse(result);
         }
         if (action === "estimateGas") {
-          const gas = await client.estimateContractGas(req as never);
+          const estParams = {
+            address: address as Address,
+            abi: abiTyped,
+            functionName,
+            args: Array.isArray(args) ? (args as readonly unknown[]) : [],
+            account: (account as Address) || undefined,
+            blockTag: blockTag as BlockTag | undefined,
+          } satisfies Parameters<typeof client.estimateContractGas>[0];
+          const gas = await client.estimateContractGas(estParams);
           return jsonResponse({ gas: gas.toString() });
         }
         throw new Error("action must be one of read|simulate|estimateGas");
@@ -560,7 +626,16 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           chain,
         } = validateInput(TransactionBuildSchema, params);
         const client = clientManager.getClient(chain);
-        const req: Record<string, unknown> = {};
+        const req: {
+          from?: Address;
+          to?: Address;
+          data?: `0x${string}`;
+          value?: bigint;
+          gas?: bigint;
+          maxFeePerGas?: bigint;
+          maxPriorityFeePerGas?: bigint;
+          nonce?: number;
+        } = {};
         const toBigIntIf = (v?: string) => (v ? BigInt(v) : undefined);
         if (from) {
           req["from"] = from as Address;
@@ -574,30 +649,43 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           }
           req["data"] = data as `0x${string}`;
         }
-        if (value) {
-          req["value"] = toBigIntIf(value);
+        const vv = toBigIntIf(value);
+        if (vv !== undefined) {
+          req.value = vv;
         }
-        if (gas) {
-          req["gas"] = toBigIntIf(gas);
+        const gg = toBigIntIf(gas);
+        if (gg !== undefined) {
+          req.gas = gg;
         }
-        if (gasPrice) {
-          req["gasPrice"] = toBigIntIf(gasPrice);
+        // Normalize legacy gasPrice to EIP-1559 params if provided
+        if (gasPrice && !maxFeePerGas && !maxPriorityFeePerGas) {
+          const gp = toBigIntIf(gasPrice);
+          if (gp !== undefined) {
+            req["maxFeePerGas"] = gp;
+            req["maxPriorityFeePerGas"] = gp;
+          }
         }
-        if (maxFeePerGas) {
-          req["maxFeePerGas"] = toBigIntIf(maxFeePerGas);
+        const mf = toBigIntIf(maxFeePerGas);
+        if (mf !== undefined) {
+          req.maxFeePerGas = mf;
         }
-        if (maxPriorityFeePerGas) {
-          req["maxPriorityFeePerGas"] = toBigIntIf(maxPriorityFeePerGas);
+        const mp = toBigIntIf(maxPriorityFeePerGas);
+        if (mp !== undefined) {
+          req.maxPriorityFeePerGas = mp;
         }
         if (nonce) {
           req["nonce"] = Number(nonce);
         }
         if (mode === "estimateGas") {
-          const g = await client.estimateGas(req as never);
+          const g = await client.estimateGas(req);
           return jsonResponse({ gas: g.toString() });
         }
         if (mode === "prepare") {
-          const prepared = await client.prepareTransactionRequest(req as never);
+          const prepared = await client.prepareTransactionRequest({
+            ...req,
+            // explicitly provide chain: undefined to satisfy exactOptionalPropertyTypes
+            chain: undefined,
+          });
           return jsonResponse(prepared);
         }
         throw new Error("mode must be estimateGas|prepare");
@@ -624,7 +712,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       try {
         const { includeSupported, includeRpcUrl, chain } = validateInput(ChainInfoSchema, params);
         const client = clientManager.getClient(chain);
-        const out: Record<string, unknown> = {};
+        const out: ChainInfoOutput = { chainId: 0 } as ChainInfoOutput;
         const id = await client.getChainId();
         out["chainId"] = id;
         if (includeSupported) {

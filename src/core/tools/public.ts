@@ -1,7 +1,8 @@
-import { type Address, isAddress } from "viem";
+import { type Address, type BlockTag, isAddress } from "viem";
 import { ClientManager } from "../clientManager.js";
 import { jsonResponse, handleError } from "../responses.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { LogParameters } from "../types.js";
 
 export function registerPublicTools(server: McpServer, clientManager: ClientManager) {
   // Keep only explicit public primitive not covered by consolidated tools
@@ -22,25 +23,27 @@ export function registerPublicTools(server: McpServer, clientManager: ClientMana
     async ({ address, topics, fromBlock, toBlock, chain }) => {
       try {
         const client = clientManager.getClient(chain);
-        const params: Record<string, unknown> = {};
+        const params: LogParameters = {};
         if (address) {
           if (!isAddress(address)) {
             throw new Error("Invalid address");
           }
-          params["address"] = address as Address;
+          (params as { address?: Address }).address = address as Address;
         }
         if (Array.isArray(topics)) {
-          params["topics"] = topics as unknown[];
+          (params as { topics?: unknown[] }).topics = topics as unknown[];
         }
-        const parseBlock = (v?: string) =>
-          v && (/^0x/.test(v) || /^\d+$/.test(v)) ? BigInt(v) : (v as never);
-        if (fromBlock) {
-          params["fromBlock"] = parseBlock(fromBlock);
-        }
-        if (toBlock) {
-          params["toBlock"] = parseBlock(toBlock);
-        }
-        const logs = await client.getLogs(params as never);
+        const parseBlock = (v?: string): bigint | BlockTag | undefined => {
+          if (!v) return undefined;
+          if (/^\d+$/.test(v) || /^0x[0-9a-fA-F]+$/.test(v)) return BigInt(v);
+          if (v === "latest" || v === "earliest" || v === "pending") return v as BlockTag;
+          return undefined;
+        };
+        const fb = parseBlock(fromBlock);
+        if (fb !== undefined) (params as { fromBlock?: bigint | BlockTag }).fromBlock = fb;
+        const tb = parseBlock(toBlock);
+        if (tb !== undefined) (params as { toBlock?: bigint | BlockTag }).toBlock = tb;
+        const logs = await client.getLogs(params);
         return jsonResponse({ count: logs.length, logs });
       } catch (error) {
         return handleError(error);

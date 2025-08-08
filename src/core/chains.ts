@@ -52,12 +52,7 @@ export function getChainByName(name: string): Chain | undefined {
 export function findChainByIdLocal(id: number): Chain | undefined {
   for (const key of Object.keys(SUPPORTED_CHAINS)) {
     const c = SUPPORTED_CHAINS[key];
-    if (
-      c &&
-      typeof c === "object" &&
-      "id" in (c as Record<string, unknown>) &&
-      (c as { id: number }).id === id
-    ) {
+    if (c && typeof c === "object" && typeof c.id === "number" && c.id === id) {
       return c as Chain;
     }
   }
@@ -71,14 +66,10 @@ export async function resolveChainById(id: number): Promise<Chain | undefined> {
       return undefined;
     }
     const all = await import("viem/chains");
-    const values = Object.values(all) as unknown[];
-    const chain = values.find(
-      (c) =>
-        c &&
-        typeof c === "object" &&
-        "id" in (c as Record<string, unknown>) &&
-        (c as { id: number }).id === id
-    ) as Chain | undefined;
+  const values = Object.values(all) as unknown[];
+  const chain = values.find((c) => c && typeof c === "object" && (c as { id?: number }).id === id) as
+    | Chain
+    | undefined;
     return chain;
   } catch {
     return undefined;

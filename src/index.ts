@@ -3,8 +3,7 @@
 import "dotenv/config";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { type Address, parseEther, formatEther, isAddress, keccak256, toHex } from "viem";
-// Removed normalize (legacy ENS tools removed)
+import { type Address, type Abi, parseEther, formatEther, isAddress, keccak256, toHex } from "viem";
 import { registerEVMPrompts } from "./core/prompts.js";
 import { registerPublicTools } from "./core/tools/public.js";
 import { registerEnsTools } from "./core/tools/ens.js";
@@ -15,7 +14,6 @@ import { jsonResponse, textResponse, handleError } from "./core/responses.js";
 // Removed SUPPORTED_CHAINS direct tool (use consolidated viemChainInfo)
 import {
   validateInput,
-  // Consolidated tools cover balance/blocks/tx/erc20/ens/etc.
   ParseEtherSchema,
   FormatEtherSchema,
   IsAddressSchema,
@@ -239,13 +237,13 @@ server.tool(
         }
         return {
           address: c.address as Address,
-          abi: c.abi,
+          abi: c.abi as Abi,
           functionName: c.functionName,
-          args: Array.isArray(c.args) ? c.args : [],
+          args: Array.isArray(c.args) ? (c.args as readonly unknown[]) : [],
         };
-      });
+      }) as readonly { address: Address; abi: Abi; functionName: string; args?: readonly unknown[] }[];
       const result = await client.multicall({
-        contracts: normalized as never,
+        contracts: normalized,
         allowFailure: allowFailure !== false,
       });
       return jsonResponse(result);
