@@ -72,6 +72,15 @@ export default [
     },
   },
   {
-    ignores: ["node_modules/", "build/", "dist/", "tests/", "*.config.js", "*.config.mjs", "**/*.test.ts", "**/*.spec.ts"],
+    ignores: [
+      "node_modules/",
+      "build/",
+      "dist/",
+      "tests/",
+      "*.config.js",
+      "*.config.mjs",
+      "**/*.test.ts",
+      "**/*.spec.ts",
+    ],
   },
 ];

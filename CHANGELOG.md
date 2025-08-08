@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4] - 2025-01-08
+
+### Changed
+- Consolidated tool adoption completed: removed legacy single-purpose registrations in `src/index.ts` in favor of consolidated tools.
+- Standardized validation for consolidated tools using Zod schemas in `src/core/validation.ts` and integrated across `src/core/tools/consolidated.ts`.
+- Improved typing: reduced `as never`, added focused types, narrowed `unknown` and `Record<string, unknown>` where practical.
+- Added inline comments/JSDoc describing each consolidated tool.
+
+### Fixed
+- Inspector confusion from legacy tools: ensure only consolidated + primitives are registered.
+
+### Misc
+- Bump server/package version to 0.0.4.
+
 ## [0.0.3] - 2025-01-08
 
 ### Added

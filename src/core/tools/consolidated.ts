@@ -2,9 +2,28 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ClientManager } from "../clientManager.js";
 import { jsonResponse, handleError } from "../responses.js";
 import { isAddress, type Address, type Hash, formatEther, erc20Abi } from "viem";
+import {
+  validateInput,
+  BlockInfoSchema,
+  TransactionInfoSchema,
+  AccountInfoSchema,
+  GasInfoSchema,
+  EnsInfoSchema,
+  Erc20InfoSchema,
+  ContractStateSchema,
+  EncodeDataSchema,
+  ContractActionSchema,
+  TransactionBuildSchema,
+  ChainInfoSchema,
+} from "../validation.js";
 
+/**
+ * Register consolidated Model Context Protocol tools for viemcp.
+ * Each tool groups a set of related read-only EVM actions behind one interface.
+ * Input validation uses Zod schemas from `src/core/validation.ts`.
+ */
 export function registerConsolidatedTools(server: McpServer, clientManager: ClientManager) {
-  // viemBlockInfo
+  // viemBlockInfo — combined view of block header, optional tx count, optional full transactions
   server.tool(
     "viemBlockInfo",
     "Get block header and optionally tx count/full transactions",
@@ -24,8 +43,12 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: [],
     },
-    async ({ numberOrTag, includeTxCount, includeFullTransactions, chain }) => {
+    async (params) => {
       try {
+        const { numberOrTag, includeTxCount, includeFullTransactions, chain } = validateInput(
+          BlockInfoSchema,
+          params
+        );
         const client = clientManager.getClient(chain);
         const input = (numberOrTag ?? "latest").trim().toLowerCase();
         const tagSet = new Set(["latest", "earliest", "pending"]);
@@ -52,7 +75,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemTransactionInfo
+  // viemTransactionInfo — transaction object; optionally include receipt & logs
   server.tool(
     "viemTransactionInfo",
     "Get transaction details and optionally receipt/logs",
@@ -69,11 +92,12 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["hash"],
     },
-    async ({ hash, includeReceipt, includeLogs, chain }) => {
+    async (params) => {
       try {
-        if (!/^0x[a-fA-F0-9]{64}$/.test(hash)) {
-          throw new Error("Invalid transaction hash");
-        }
+        const { hash, includeReceipt, includeLogs, chain } = validateInput(
+          TransactionInfoSchema,
+          params
+        );
         const client = clientManager.getClient(chain);
         const tx = await client.getTransaction({ hash: hash as Hash });
         let receipt: unknown | undefined;
@@ -93,7 +117,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemAccountInfo
+  // viemAccountInfo — balance (optionally at historical tag) and optional nonce
   server.tool(
     "viemAccountInfo",
     "Get account balance and optionally nonce",
@@ -111,11 +135,12 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["address"],
     },
-    async ({ address, blockTag, historicalBalanceAt, includeNonce, chain }) => {
+    async (params) => {
       try {
-        if (!isAddress(address)) {
-          throw new Error("Invalid address");
-        }
+        const { address, blockTag, historicalBalanceAt, includeNonce, chain } = validateInput(
+          AccountInfoSchema,
+          params
+        );
         const client = clientManager.getClient(chain);
         const balance = await client.getBalance({
           address: address as Address,
@@ -140,7 +165,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemGasInfo
+  // viemGasInfo — current gas price and/or EIP-1559 fee history
   server.tool(
     "viemGasInfo",
     "Get gas price and/or EIP-1559 fee history",
@@ -161,8 +186,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: [],
     },
-    async ({ includePrice, history, chain }) => {
+    async (params) => {
       try {
+        const { includePrice, history, chain } = validateInput(GasInfoSchema, params);
         const client = clientManager.getClient(chain);
         const out: Record<string, unknown> = {};
         if (includePrice !== false) {
@@ -190,7 +216,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemEnsInfo
+  // viemEnsInfo — ENS name/address resolution, resolver, avatar, and text records
   server.tool(
     "viemEnsInfo",
     "Resolve ENS data (name <-> address, resolver, avatar, text records)",
@@ -208,17 +234,18 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["lookupType", "value"],
     },
-    async ({
-      lookupType,
-      value,
-      includeAddress,
-      includeName,
-      includeResolver,
-      includeAvatar,
-      textKeys,
-      chain,
-    }) => {
+    async (params) => {
       try {
+        const {
+          lookupType,
+          value,
+          includeAddress,
+          includeName,
+          includeResolver,
+          includeAvatar,
+          textKeys,
+          chain,
+        } = validateInput(EnsInfoSchema, params);
         const client = clientManager.getClient(chain ?? "ethereum");
         const out: Record<string, unknown> = { lookupType };
         if (lookupType === "name") {
@@ -257,7 +284,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemErc20Info
+  // viemErc20Info — ERC20 metadata, balance, and allowance in one call
   server.tool(
     "viemErc20Info",
     "Get ERC20 metadata/balance/allowance",
@@ -274,11 +301,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["token"],
     },
-    async ({ token, owner, spender, includeMetadata, includeBalance, includeAllowance, chain }) => {
+    async (params) => {
       try {
-        if (!isAddress(token)) {
-          throw new Error("Invalid token");
-        }
+        const { token, owner, spender, includeMetadata, includeBalance, includeAllowance, chain } =
+          validateInput(Erc20InfoSchema, params);
         const client = clientManager.getClient(chain);
         const out: Record<string, unknown> = { token };
         if (includeMetadata !== false) {
@@ -339,7 +365,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemContractState
+  // viemContractState — contract code and/or storage slots
   server.tool(
     "viemContractState",
     "Get contract code and/or storage slots",
@@ -355,11 +381,12 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["address"],
     },
-    async ({ address, slots, blockTag, includeCode, includeStorage, chain }) => {
+    async (params) => {
       try {
-        if (!isAddress(address)) {
-          throw new Error("Invalid address");
-        }
+        const { address, slots, blockTag, includeCode, includeStorage, chain } = validateInput(
+          ContractStateSchema,
+          params
+        );
         const client = clientManager.getClient(chain);
         const out: Record<string, unknown> = { address };
         if (includeCode !== false) {
@@ -391,7 +418,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemEncodeData
+  // viemEncodeData — encode function call data or deployment data
   server.tool(
     "viemEncodeData",
     "Encode function/deploy data",
@@ -407,8 +434,12 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["mode", "abi"],
     },
-    async ({ mode, abi, functionName, args, bytecode, constructorArgs }) => {
+    async (params) => {
       try {
+        const { mode, abi, functionName, args, bytecode, constructorArgs } = validateInput(
+          EncodeDataSchema,
+          params
+        );
         if (mode === "function") {
           const { encodeFunctionData } = await import("viem");
           const data = encodeFunctionData({
@@ -419,9 +450,6 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           return jsonResponse({ data });
         }
         if (mode === "deploy") {
-          if (!/^0x[0-9a-fA-F]*$/.test(bytecode ?? "")) {
-            throw new Error("bytecode must be 0x-hex");
-          }
           const { encodeDeployData } = await import("viem");
           const data = encodeDeployData({
             abi,
@@ -437,7 +465,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemContractAction
+  // viemContractAction — read/simulate/estimateGas for a single contract function
   server.tool(
     "viemContractAction",
     "Read/simulate/estimateGas for a contract function",
@@ -456,11 +484,10 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["action", "address", "abi", "functionName"],
     },
-    async ({ action, address, abi, functionName, args, account, value, blockTag, chain }) => {
+    async (params) => {
       try {
-        if (!isAddress(address)) {
-          throw new Error("Invalid address");
-        }
+        const { action, address, abi, functionName, args, account, value, blockTag, chain } =
+          validateInput(ContractActionSchema, params);
         const client = clientManager.getClient(chain);
         const req: Record<string, unknown> = {
           address: address as Address,
@@ -469,15 +496,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
           args: Array.isArray(args) ? args : [],
         };
         if (account) {
-          if (!isAddress(account)) {
-            throw new Error("Invalid account");
-          }
           req["account"] = account as Address;
         }
         if (value) {
-          if (!/^\d+$/.test(value) && !/^0x[0-9a-fA-F]+$/.test(value)) {
-            throw new Error("value must be dec or 0x-hex");
-          }
           req["value"] = BigInt(value);
         }
         if (blockTag) {
@@ -502,7 +523,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemTransactionBuild
+  // viemTransactionBuild — estimate gas or prepare a transaction request
   server.tool(
     "viemTransactionBuild",
     "Estimate gas or prepare a transaction request",
@@ -523,33 +544,28 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: ["mode"],
     },
-    async ({
-      mode,
-      from,
-      to,
-      data,
-      value,
-      gas,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      gasPrice,
-      nonce,
-      chain,
-    }) => {
+    async (params) => {
       try {
+        const {
+          mode,
+          from,
+          to,
+          data,
+          value,
+          gas,
+          maxFeePerGas,
+          maxPriorityFeePerGas,
+          gasPrice,
+          nonce,
+          chain,
+        } = validateInput(TransactionBuildSchema, params);
         const client = clientManager.getClient(chain);
         const req: Record<string, unknown> = {};
         const toBigIntIf = (v?: string) => (v ? BigInt(v) : undefined);
         if (from) {
-          if (!isAddress(from)) {
-            throw new Error("Invalid from");
-          }
           req["from"] = from as Address;
         }
         if (to) {
-          if (!isAddress(to)) {
-            throw new Error("Invalid to");
-          }
           req["to"] = to as Address;
         }
         if (data) {
@@ -591,7 +607,7 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
     }
   );
 
-  // viemChainInfo
+  // viemChainInfo — chain id and optionally supported chain list and rpc URL
   server.tool(
     "viemChainInfo",
     "Get chain id and/or supported chains",
@@ -604,8 +620,9 @@ export function registerConsolidatedTools(server: McpServer, clientManager: Clie
       },
       required: [],
     },
-    async ({ includeSupported, includeRpcUrl, chain }) => {
+    async (params) => {
       try {
+        const { includeSupported, includeRpcUrl, chain } = validateInput(ChainInfoSchema, params);
         const client = clientManager.getClient(chain);
         const out: Record<string, unknown> = {};
         const id = await client.getChainId();
