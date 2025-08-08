@@ -21,17 +21,23 @@ export function registerEVMPrompts(server: McpServer) {
       messages: [
         {
           role: "user",
-          content: {
-            type: "text" as const,
-            text:
-              `You are assisting in writing TypeScript code using viem.\n` +
-              `Consult the following resources to cite correct APIs and patterns:\n` +
-              `- viem://docs/github-index (then pick relevant viem://docs/github/... resources)\n\n` +
-              `Goal: ${feature}\n` +
-              (hints ? `Hints: ${hints}\n` : "") +
-              `Deliver:\n` +
-              `1) Brief plan\n2) Code snippets with imports\n3) Notes on chain/client setup and error handling\n4) Links to the specific viem://docs/github/... resources used.`,
-          },
+          content: [
+            {
+              type: "text" as const,
+              text:
+                `You are assisting in writing TypeScript code using viem.\n` +
+                `Consult the attached Viem docs index to locate relevant pages, and cite specific viem://docs/github/... resources.\n\n` +
+                `Goal: ${feature}\n` +
+                (hints ? `Hints: ${hints}\n` : "") +
+                `Deliver:\n` +
+                `1) Brief plan\n2) Code snippets with imports\n3) Notes on chain/client setup and error handling\n4) Links to the specific viem://docs/github/... resources used.`,
+            },
+            {
+              // Provide the Viem docs index as an attached resource so the model can fetch it immediately
+              type: "resource" as const,
+              resource: { uri: "viem://docs/github-index" },
+            },
+          ],
         },
       ],
     })) as unknown as never
@@ -52,10 +58,12 @@ export function registerEVMPrompts(server: McpServer) {
       messages: [
         {
           role: "user",
-          content: {
-            type: "text" as const,
-            text: `Please analyze transaction ${txHash} on ${chain}. Include purpose, parties, value, gas, and any noteworthy effects.`,
-          },
+          content: [
+            {
+              type: "text" as const,
+              text: `Please analyze transaction ${txHash} on ${chain}. Include purpose, parties, value, gas, and any noteworthy effects.`,
+            },
+          ],
         },
       ],
     })) as unknown as never
@@ -76,10 +84,12 @@ export function registerEVMPrompts(server: McpServer) {
       messages: [
         {
           role: "user",
-          content: {
-            type: "text" as const,
-            text: `Please analyze the address ${address} on ${chain}. Include balance, nonce, recent activity, and potential contract status.`,
-          },
+          content: [
+            {
+              type: "text" as const,
+              text: `Please analyze the address ${address} on ${chain}. Include balance, nonce, recent activity, and potential contract status.`,
+            },
+          ],
         },
       ],
     })) as unknown as never
@@ -99,12 +109,18 @@ export function registerEVMPrompts(server: McpServer) {
       messages: [
         {
           role: "user",
-          content: {
-            type: "text" as const,
-            text:
-              `Search the viem docs resources for: "${query}".\n` +
-              `Start at viem://docs/github-index, then gather and cite specific viem://docs/github/... pages. Provide a concise summary and a short how-to snippet if applicable.`,
-          },
+          content: [
+            {
+              type: "text" as const,
+              text:
+                `Search the Viem docs resources for: "${query}". Use the attached index to locate relevant pages, then gather and cite specific viem://docs/github/... pages. Provide a concise summary and a short how-to snippet if applicable.`,
+            },
+            {
+              // Attach the Viem docs index for immediate access
+              type: "resource" as const,
+              resource: { uri: "viem://docs/github-index" },
+            },
+          ],
         },
       ],
     })) as unknown as never

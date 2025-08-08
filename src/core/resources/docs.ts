@@ -1,4 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 type GithubTreeEntry = {
   path: string;
@@ -27,6 +30,73 @@ async function fetchViemDocsTree(): Promise<string[]> {
   return data.tree
     .filter((e) => e.type === "blob" && e.path.startsWith(base) && e.path.endsWith(".mdx"))
     .map((e) => e.path.slice(base.length));
+}
+
+// Simple on-disk cache for tree paths
+function getCacheDir(): string {
+  const override = process.env["VIEM_DOCS_CACHE_DIR"];
+  if (override && override.trim().length > 0) {
+    return override;
+  }
+  return path.join(os.homedir(), ".cache", "viemcp", "docs");
+}
+
+function getTreeCachePath(): string {
+  return path.join(getCacheDir(), "tree.json");
+}
+
+const DEFAULT_TREE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+async function ensureCacheDir(): Promise<void> {
+  await mkdir(getCacheDir(), { recursive: true });
+}
+
+type TreeCache = {
+  branch: string;
+  timestampMs: number;
+  files: string[];
+};
+
+async function readTreeCache(): Promise<TreeCache | undefined> {
+  try {
+    const raw = await readFile(getTreeCachePath(), "utf8");
+    const json = JSON.parse(raw) as TreeCache;
+    if (!json || !Array.isArray(json.files)) {
+      return undefined;
+    }
+    return json;
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeTreeCache(cache: TreeCache): Promise<void> {
+  await ensureCacheDir();
+  const tmpPath = getTreeCachePath() + ".tmp";
+  await writeFile(tmpPath, JSON.stringify(cache, null, 2), "utf8");
+  // atomic-ish replace
+  await writeFile(getTreeCachePath(), JSON.stringify(cache, null, 2), "utf8");
+}
+
+async function getDocsPathsWithCache(): Promise<string[]> {
+  const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
+  const ttlMs = Number(process.env["VIEM_DOCS_TTL_MS_TREE"]) || DEFAULT_TREE_TTL_MS;
+  const now = Date.now();
+  const cached = await readTreeCache();
+  if (cached && cached.branch === branch && now - cached.timestampMs <= ttlMs) {
+    return cached.files;
+  }
+  try {
+    const files = await fetchViemDocsTree();
+    await writeTreeCache({ branch, timestampMs: now, files });
+    return files;
+  } catch (error) {
+    // Fallback to cached if available
+    if (cached) {
+      return cached.files;
+    }
+    throw error;
+  }
 }
 
 function registerGithubDocResource(server: McpServer, relativePath: string) {
@@ -67,7 +137,7 @@ function registerGithubDocResource(server: McpServer, relativePath: string) {
 
 export async function setupGithubDocsResources(server: McpServer) {
   try {
-    const mdxPaths = await fetchViemDocsTree();
+    const mdxPaths = await getDocsPathsWithCache();
     const branch = process.env["VIEM_DOCS_BRANCH"] || "main";
     // Group by top-level folder to mirror sections
     const groups = new Map<string, string[]>();

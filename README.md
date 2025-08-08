@@ -4,13 +4,14 @@ A Model Context Protocol (MCP) server that provides blockchain interaction capab
 
 ## Features
 
-- **Multi-chain Support**: Access any EVM-compatible blockchain supported by viem
-- **Read Operations**: Query balances, blocks, transactions, and smart contract state
-- **Token Standards**: Full support for ERC20, ERC721, and ERC1155 tokens
-- **ENS Resolution**: Resolve ENS names and reverse lookups
-- **Transaction Preparation**: Create unsigned transactions for user signing
-- **Type Safety**: Full TypeScript support with viem's type inference
-- **Security-First**: No private key handling, only read operations and transaction preparation
+- **Multi-chain Support**: Access EVM chains via viem; minimal defaults with dynamic chain resolution
+- **Read Operations**: Query balances, blocks, transactions, logs, storage, and smart contract state
+- **Token Standards**: ERC20 read operations (balance, metadata, allowance)
+- **ENS**: Resolve ENS names, reverse lookups, and fetch resolvers
+- **Tx Prep & Encoding**: Prepare transaction requests; encode function and deploy data
+- **Docs Resources**: Live, queryable resources for viem documentation from GitHub
+- **Type Safety**: TypeScript throughout with viem's type inference
+- **Security-First**: Read-only; prepares unsigned transactions only (no key management)
 
 ## Installation
 
@@ -29,19 +30,31 @@ bun run start
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root. RPC URLs can be provided per-chain and per-provider. By default, provider is `drpc`.
 
 ```env
-# RPC endpoints (optional - defaults to public endpoints)
-ETH_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
-POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY
-ARB_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY
+# RPC provider selector (optional; default: drpc)
+RPC_PROVIDER=drpc
 
-# Default chain ID (optional - defaults to 1 for Ethereum mainnet)
-DEFAULT_CHAIN_ID=1
+# RPC endpoints (examples; either generic or provider-specific)
+# Generic naming (preferred):
+ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/KEY
+MAINNET_RPC_URL=https://eth.llamarpc.com
 
-# Enable debug logging (optional)
-DEBUG=true
+# Provider-specific naming (takes precedence if RPC_PROVIDER matches):
+ETHEREUM_RPC_URL_DRPC=https://lb.drpc.org/ogrpc?network=ethereum&dkey=KEY
+MAINNET_RPC_URL_DRPC=https://lb.drpc.org/ogrpc?network=ethereum&dkey=KEY
+
+# Dynamic docs branch for resources (optional; default: main)
+VIEM_DOCS_BRANCH=main
+
+# Enable/disable dynamic chain resolution from viem (optional; default: enabled)
+VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION=true
+
+# Register custom chains (optional). JSON array of viem Chain objects
+VIEM_CUSTOM_CHAINS=[
+  { "id": 8453, "name": "Base", "nativeCurrency": {"name":"Ether","symbol":"ETH","decimals":18}, "rpcUrls": {"default": {"http": ["https://mainnet.base.org"]}} }
+]
 ```
 
 ### MCP Client Configuration
@@ -53,9 +66,9 @@ Add to your MCP client settings (e.g., Claude Desktop):
   "mcpServers": {
     "viemcp": {
       "command": "node",
-      "args": ["/path/to/viemcp/build/index.js"],
+      "args": ["/absolute/path/to/viemcp/build/index.js"],
       "env": {
-        "ETH_RPC_URL": "your_rpc_url_here"
+        "ETHEREUM_RPC_URL": "https://eth.llamarpc.com"
       }
     }
   }
@@ -64,108 +77,99 @@ Add to your MCP client settings (e.g., Claude Desktop):
 
 ## Available Tools
 
+Below is the complete list of tools currently implemented.
+
 ### Core Blockchain Tools
 
-- `getBalance` - Get native token balance for an address
-- `getBlock` - Get block information by number or tag
-- `getTransaction` - Get transaction details by hash
-- `getTransactionReceipt` - Get transaction receipt with logs
-- `getGasPrice` - Get current gas price
-- `estimateGas` - Estimate gas for a transaction
-- `getChainId` - Get the chain ID
-- `getBlockNumber` - Get the latest block number
+- `getBalance` — Get native token balance for an address
+- `getBlock` — Get block by number (decimal or 0x-hex) or tag (`latest`, `earliest`, `pending`)
+- `getBlockNumber` — Get the latest block number
+- `getTransaction` — Get transaction details by hash
+- `getTransactionReceipt` — Get transaction receipt by hash
+- `getGasPrice` — Get current gas price (wei and gwei)
+- `estimateGas` — Estimate gas for a transaction request
+- `getChainId` — Get the chain ID for the client
+- `listSupportedChains` — List currently supported chain aliases and metadata
+- `getTransactionCount` — Get account nonce (transaction count)
+- `getBlockTransactionCount` — Number of transactions in a given block
+- `getLogs` — Filter logs by address/topics and block range
+- `getFeeHistory` — EIP-1559 fee history for recent blocks
 
 ### Smart Contract Tools
 
-- `readContract` - Read data from a smart contract
-- `simulateContract` - Simulate a contract call
-- `estimateContractGas` - Estimate gas for a contract call
-- `multicall` - Batch multiple contract calls
-- `getCode` - Get contract bytecode
-- `getStorageAt` - Read raw storage slot
+- `readContract` — Read a contract function
+- `simulateContract` — Simulate a call (no state change)
+- `estimateContractGas` — Estimate gas for a contract call
+- `multicall` — Batch multiple read calls
+- `getCode` — Get contract bytecode at an address
+- `getStorageAt` — Read raw storage slot at an address
 
 ### Token Tools
 
 #### ERC20
-- `getERC20Balance` - Get token balance
-- `getERC20Metadata` - Get token name, symbol, decimals
-- `getERC20Allowance` - Check spending allowance
 
-#### ERC721 (NFTs)
-- `getERC721Owner` - Get NFT owner
-- `getERC721Balance` - Get NFT balance for address
-- `getERC721TokenURI` - Get NFT metadata URI
+- `getERC20Balance` — Get token balance for `ownerAddress`
+- `getERC20Metadata` — Get token name, symbol, and decimals
+- `getERC20Allowance` — Get allowance granted by `owner` to `spender`
 
-#### ERC1155
-- `getERC1155Balance` - Get token balance
-- `getERC1155URI` - Get metadata URI
+Note: ERC721/1155 tools are not currently implemented.
 
 ### ENS Tools
 
-- `resolveEnsAddress` - Resolve ENS name to address
-- `resolveEnsName` - Reverse lookup address to ENS
-- `resolveEnsAvatar` - Get ENS avatar
-- `resolveEnsText` - Get ENS text records
+- `resolveEnsAddress` — Resolve ENS name to address, with options to include avatar and selected text records
+- `getEnsName` — Reverse lookup an address to ENS name
+- `getEnsResolver` — Get ENS resolver for a name
 
 ### Transaction Tools
 
-- `prepareTransaction` - Create unsigned transaction
-- `prepareContractWrite` - Prepare contract interaction
-- `encodeFunctionData` - Encode function call data
-- `encodeDeployData` - Encode contract deployment
+- `prepareTransactionRequest` — Prepare an unsigned transaction request (no signing)
+- `encodeFunctionData` — Encode function call data for a contract
+- `encodeDeployData` — Encode deployment data for a contract
 
 ### Utility Tools
 
-- `parseEther` - Convert ETH to wei
-- `formatEther` - Convert wei to ETH
-- `parseUnits` - Parse token amounts
-- `formatUnits` - Format token amounts
-- `isAddress` - Validate Ethereum address
-- `getAddress` - Checksum an address
-- `keccak256` - Hash data
+- `parseEther` — Convert ETH to wei
+- `formatEther` — Convert wei to ETH
+- `isAddress` — Validate Ethereum address format
+- `keccak256` — Hash data using Keccak-256
 
 ## Available Resources
 
-Resources provide read-only access to blockchain data via URIs:
+In addition to tools, this server exposes live documentation resources for viem. These are fetched directly from GitHub and exposed under the `viem://docs/*` URI scheme.
 
-### Chain Resources
-- `viem://chain/{chainId}` - Chain configuration
-- `viem://chain/{chainId}/block/latest` - Latest block
-- `viem://chain/{chainId}/block/{number}` - Specific block
-- `viem://chain/{chainId}/gasPrice` - Current gas price
+### Docs Resources
+- `viem://docs/github-index` — Lists all available viem docs pages (from the configured branch)
+- `viem://docs/github/{path}.mdx` — Raw content of a specific viem docs page
 
-### Address Resources
-- `viem://chain/{chainId}/address/{address}` - Address info & balance
-- `viem://chain/{chainId}/address/{address}/nonce` - Transaction count
-- `viem://chain/{chainId}/address/{address}/code` - Contract bytecode
+Note: Chain/address/tx resources are not currently implemented. Use tools for onchain data.
 
-### Transaction Resources
-- `viem://chain/{chainId}/tx/{hash}` - Transaction details
-- `viem://chain/{chainId}/tx/{hash}/receipt` - Transaction receipt
+## Available Prompts
 
-### Token Resources
-- `viem://chain/{chainId}/erc20/{token}` - ERC20 metadata
-- `viem://chain/{chainId}/erc20/{token}/balance/{address}` - ERC20 balance
-- `viem://chain/{chainId}/erc721/{token}/{tokenId}` - NFT metadata
-- `viem://chain/{chainId}/erc721/{token}/{tokenId}/owner` - NFT owner
+Prompts are higher-level assistants bundled with the server:
 
-### ENS Resources
-- `viem://ens/{name}` - Resolve ENS name
-- `viem://ens/{name}/avatar` - ENS avatar
-- `viem://ens/reverse/{address}` - Reverse ENS lookup
+- `generate_viem_code`
+  - **Args**: `feature` (string), `hints` (optional string)
+  - **Behavior**: Instructs the model to consult viem docs resources and output a plan, code, setup notes, and citations
+  - **Attached resource**: `viem://docs/github-index`
+- `analyze_transaction`
+  - **Args**: `txHash` (string), `chain` (optional; defaults to `ethereum`)
+  - **Behavior**: Requests a human-style analysis of a transaction
+- `analyze_address`
+  - **Args**: `address` (string), `chain` (optional; defaults to `ethereum`)
+  - **Behavior**: Requests a human-style analysis of an address
+- `search_viem_docs`
+  - **Args**: `query` (string)
+  - **Behavior**: Searches the registered viem docs resources and summarizes findings
+  - **Attached resource**: `viem://docs/github-index`
 
 ## Usage Examples
 
 ### Get ETH Balance
 ```javascript
-// Using tool
-await callTool("getBalance", {
-  address: "vitalik.eth",
-  chainId: 1
-});
-
-// Using resource
-await getResource("viem://chain/1/address/vitalik.eth");
+// Resolve ENS then fetch balance
+const { address } = await callTool("resolveEnsAddress", { name: "vitalik.eth" })
+  .then(r => JSON.parse(r.content[0].text));
+await callTool("getBalance", { address, chain: "ethereum" });
 ```
 
 ### Read Smart Contract
@@ -175,30 +179,37 @@ await callTool("readContract", {
   abi: [...], // ERC20 ABI
   functionName: "balanceOf",
   args: ["0x..."],
-  chainId: 1
+  chain: "ethereum"
 });
 ```
 
-### Prepare Transaction
+### Prepare Transaction Request
 ```javascript
-await callTool("prepareTransaction", {
+await callTool("prepareTransactionRequest", {
   to: "0x...",
   value: "1000000000000000000", // 1 ETH in wei
-  chainId: 1
+  chain: "ethereum"
 });
+```
+
+### Docs Resources Index
+```javascript
+await getResource("viem://docs/github-index");
 ```
 
 ## Supported Chains
 
-Viemcp supports all chains available in viem including:
-- Ethereum Mainnet
-- Polygon
-- Arbitrum
-- Optimism
-- Base
-- Avalanche
-- BSC
-- And 100+ more EVM chains
+The server ships with a minimal default set (Ethereum mainnet aliases: `mainnet`, `ethereum`, `eth`) to keep footprint small. It can:
+
+- Load custom RPC URLs from environment (see Configuration)
+- Dynamically resolve chains by ID from `viem` if `VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION` is not set to `false`
+- Register additional custom chains via `VIEM_CUSTOM_CHAINS`
+
+List what is currently available at runtime with:
+
+```javascript
+await callTool("listSupportedChains", {});
+```
 
 ## Security Considerations
 
@@ -206,7 +217,6 @@ Viemcp supports all chains available in viem including:
 - **Read-Only**: Focuses on reading blockchain state
 - **Transaction Preparation**: Only prepares unsigned transactions
 - **Input Validation**: All inputs are validated before processing
-- **Rate Limiting**: Implements request throttling (configurable)
 
 ## Development
 
@@ -217,8 +227,8 @@ bun install
 # Run in development mode
 bun run dev
 
-# Run tests
-bun test
+# Type-check
+bun run typecheck
 
 # Lint code
 bun run lint
@@ -232,13 +242,17 @@ bun run format
 ```
 viemcp/
 ├── src/
-│   ├── index.ts              # Entry point
-│   ├── server.ts             # MCP server setup
-│   ├── tools/                # Tool implementations
-│   ├── resources/            # Resource handlers
-│   ├── clients/              # Viem client management
-│   ├── types/                # TypeScript types
-│   └── utils/                # Utilities
+│   ├── index.ts              # Entry point & tool registrations
+│   └── core/
+│       ├── chains.ts         # Chain registry & RPC resolution
+│       ├── clientManager.ts  # Viem client lifecycle & cache
+│       ├── prompts.ts        # Prompt registrations
+│       ├── resources/
+│       │   └── docs.ts       # GitHub-backed viem docs resources
+│       ├── responses.ts      # Response helpers
+│       └── tools/
+│           ├── public.ts     # Logs/fees/tx count utilities
+│           └── ens.ts        # ENS resolver utility
 ├── build/                    # Compiled output
 └── tests/                    # Test files
 ```

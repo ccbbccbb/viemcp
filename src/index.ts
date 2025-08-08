@@ -19,6 +19,8 @@ import {
 import { normalize } from "viem/ens";
 import { z } from "zod";
 import { registerEVMPrompts } from "./core/prompts.js";
+import { registerPublicTools } from "./core/tools/public.js";
+import { registerEnsTools } from "./core/tools/ens.js";
 import { ClientManager } from "./core/clientManager.js";
 import { setupGithubDocsResources } from "./core/resources/docs.js";
 import { jsonResponse, textResponse, handleError } from "./core/responses.js";
@@ -1275,6 +1277,9 @@ async function main() {
 
   // Register prompts (moved to src/core/prompts.ts)
   registerEVMPrompts(server);
+  // Register modular tools
+  registerPublicTools(server, clientManager);
+  registerEnsTools(server, clientManager);
   await server.connect(transport);
   console.error("viemcp started successfully");
 }
