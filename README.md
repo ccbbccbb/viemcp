@@ -11,6 +11,7 @@ A Model Context Protocol (MCP) server that provides blockchain interaction capab
 - **Tx Prep & Encoding**: Prepare transaction requests; encode function and deploy data
 - **Docs Resources**: Live, queryable resources for viem documentation from GitHub
 - **Type Safety**: TypeScript throughout with viem's type inference
+  - Centralized types in `src/core/types.ts` for tool outputs and parameters
 - **Security-First**: Read-only; prepares unsigned transactions only (no key management)
 
 ## Installation
@@ -241,6 +242,7 @@ viemcp/
 │       ├── resources/
 │       │   └── docs.ts       # GitHub-backed viem docs resources
 │       ├── responses.ts      # Response helpers
+│       ├── types.ts          # Shared output/param types (GasInfoOutput, EnsInfoOutput, LogParameters, etc.)
 │       └── tools/
 │           ├── public.ts     # Logs/fees/tx count utilities
 │           └── ens.ts        # ENS resolver utility
@@ -251,6 +253,14 @@ viemcp/
 ## Contributing
 
 Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+
+## Type Safety Notes
+
+- All `as never` assertions were removed in favor of specific viem types (e.g., `BlockTag`, `Abi`, typed params for contract actions).
+- Generic `Record<string, unknown>` outputs were replaced with named interfaces:
+  - `GasInfoOutput`, `EnsInfoOutput`, `Erc20InfoOutput`, `ContractStateOutput`, `ChainInfoOutput`.
+- `viemGetLogs` parameters are typed via `LogParameters` with `fromBlock/toBlock` as `bigint | BlockTag`.
+- Prompts use explicit zod parsing of raw args to avoid unsafe casts while satisfying MCP SDK constraints.
 
 ## License
 
