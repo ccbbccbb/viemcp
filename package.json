@@ -1,6 +1,6 @@
 {
   "name": "viemcp",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A Model Context Protocol server for blockchain interactions using viem",
   "keywords": [
     "mcp",

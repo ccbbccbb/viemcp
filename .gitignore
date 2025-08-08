@@ -4,8 +4,8 @@ node_modules/
 .pnp.js
 
 # misc
-CONSOLIDATED-TOOLS.md
 AUDIT.md
+CONSOLIDATED-TOOLS.md
 DEPLOYMENT.md
 SITEMAP.md
 
