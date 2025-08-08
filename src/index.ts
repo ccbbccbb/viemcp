@@ -17,9 +17,6 @@ import { registerEVMPrompts } from './core/prompts.js'
 import { setupGithubDocsResources } from './core/resources/docs.js'
 import { handleError, jsonResponse, textResponse } from './core/responses.js'
 import { registerConsolidatedTools } from './core/tools/consolidated.js'
-import { registerEnsTools } from './core/tools/ens.js'
-import { registerPublicTools } from './core/tools/public.js'
-// Removed SUPPORTED_CHAINS direct tool (use consolidated viemChainInfo)
 import {
   FormatEtherSchema,
   IsAddressSchema,
@@ -62,17 +59,6 @@ const server = new McpServer(
   },
 )
 
-// Additional read-only tools (Public Actions)
-// Note: Duplicates of public tools are removed. These are registered via registerPublicTools().
-
-// getBlockTransactionCount is registered via registerPublicTools()
-
-// getLogs is registered via registerPublicTools()
-
-// getFeeHistory is registered via registerPublicTools()
-
-// getEnsResolver is registered via registerEnsTools()
-// Helper functions moved to core/responses
 
 // Helper to stringify JSON with BigInt support (prefix underscore to avoid unused rule)
 function _toJsonString(data: unknown) {
@@ -82,14 +68,6 @@ function _toJsonString(data: unknown) {
     2,
   )
 }
-
-// Removed legacy balance/block/transaction tools in favor of consolidated equivalents
-
-// Removed legacy readContract; use viemContractAction(action: "read")
-
-// Removed legacy ERC20 balance; use viemErc20Info(includeBalance)
-
-// Removed legacy ENS resolve; use viemEnsInfo
 
 // Utility Tools
 server.tool(
@@ -188,20 +166,6 @@ server.tool(
   },
 )
 
-// Removed legacy listSupportedChains; use viemChainInfo(includeSupported)
-
-// Removed legacy getBlock; use viemBlockInfo
-
-// Removed legacy getTransactionReceipt; use viemTransactionInfo(includeReceipt)
-
-// Removed legacy getGasPrice; use viemGasInfo(includePrice)
-
-// Removed legacy estimateGas; use viemTransactionBuild(mode: "estimateGas")
-
-// Removed legacy getChainId; use viemChainInfo
-
-// Removed legacy simulate/estimateContractGas; use viemContractAction
-
 server.tool(
   'viemMulticall',
   'Batch multiple contract reads (no state change)',
@@ -267,30 +231,15 @@ server.tool(
   },
 )
 
-// Removed legacy getCode/getStorageAt; use viemContractState
-
-// Removed legacy ERC20 metadata/allowance; use viemErc20Info
-
-// Removed legacy ENS reverse; use viemEnsInfo(lookupType: "address")
-
-// Removed getEnsAvatar/getEnsText as resolveEnsAddress covers these via flags
-
-// Removed legacy tx build/encoding; use viemTransactionBuild and viemEncodeData
-// Docs helpers moved to core/resources/docs.ts
-
-// Docs resources moved to core/resources/docs.ts
-
 // Start server
 async function main() {
   const transport = new StdioServerTransport()
   // Register GitHub-based Viem docs resources before connecting
   await setupGithubDocsResources(server)
 
-  // Register prompts (moved to src/core/prompts.ts)
+  // Register prompts
   registerEVMPrompts(server)
-  // Register modular tools
-  registerPublicTools(server, clientManager)
-  registerEnsTools(server, clientManager)
+  // Register consolidated tools (includes all blockchain operations)
   registerConsolidatedTools(server, clientManager)
   await server.connect(transport)
   console.error('viemcp started successfully')

@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish-npm:
+    name: Publish to npm when version changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.19
+
+      - name: Detect version change
+        id: version
+        run: |
+          PREV=$(git show HEAD^:package.json | jq -r .version || echo "")
+          CURR=$(jq -r .version package.json)
+          echo "prev=$PREV" >> $GITHUB_OUTPUT
+          echo "curr=$CURR" >> $GITHUB_OUTPUT
+          if [ "$PREV" = "$CURR" ]; then
+            echo "changed=no" >> $GITHUB_OUTPUT
+          else
+            echo "changed=yes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build & Test
+        run: |
+          bun run prepack
+          bun run test
+
+      - name: Publish
+        if: steps.version.outputs.changed == 'yes'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          bun publish --access public
+
+  deploy-vercel:
+    name: Deploy site to Vercel when site version changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect site version change
+        id: sver
+        run: |
+          PREV=$(git show HEAD^:site/package.json | jq -r .version || echo "")
+          CURR=$(jq -r .version site/package.json)
+          echo "prev=$PREV" >> $GITHUB_OUTPUT
+          echo "curr=$CURR" >> $GITHUB_OUTPUT
+          if [ "$PREV" = "$CURR" ]; then
+            echo "changed=no" >> $GITHUB_OUTPUT
+          else
+            echo "changed=yes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.19
+
+      - name: Install deps
+        working-directory: site
+        run: bun install --frozen-lockfile
+
+      - name: Build site
+        if: steps.sver.outputs.changed == 'yes'
+        working-directory: site
+        run: bun run build
+
+      - name: Vercel Deploy
+        if: steps.sver.outputs.changed == 'yes'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: site
+          github-comment: false
+          scope: ${{ secrets.VERCEL_SCOPE }}
+

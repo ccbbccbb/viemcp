@@ -1,7 +1,25 @@
 import { type Chain, mainnet } from 'viem/chains'
 
+// Default public RPC URLs for common chains (fallback when no env vars set)
+const DEFAULT_RPC_URLS: Record<string, string> = {
+  mainnet: 'https://eth.llamarpc.com',
+  ethereum: 'https://eth.llamarpc.com',
+  eth: 'https://eth.llamarpc.com',
+  polygon: 'https://polygon-rpc.com',
+  arbitrum: 'https://arb1.arbitrum.io/rpc',
+  optimism: 'https://mainnet.optimism.io',
+  base: 'https://mainnet.base.org',
+  avalanche: 'https://api.avax.network/ext/bc/C/rpc',
+  bsc: 'https://bsc-dataseed.binance.org',
+  gnosis: 'https://rpc.gnosischain.com',
+  fantom: 'https://rpc.ftm.tools',
+  celo: 'https://forno.celo.org',
+  moonbeam: 'https://rpc.api.moonbeam.network',
+  aurora: 'https://mainnet.aurora.dev',
+}
+
 export function getRpcUrl(chainName: string): string | undefined {
-  const provider = process.env.RPC_PROVIDER || 'drpc'
+  const provider = process.env['RPC_PROVIDER'] || 'drpc'
 
   const envVariants = [
     chainName.toUpperCase(),
@@ -25,15 +43,23 @@ export function getRpcUrl(chainName: string): string | undefined {
       return genericUrl
     }
   }
+  
+  // Fall back to default public RPC URLs if available
+  const defaultUrl = DEFAULT_RPC_URLS[chainName.toLowerCase()]
+  if (defaultUrl) {
+    console.error(`Using default public RPC for ${chainName}: ${defaultUrl}`)
+    return defaultUrl
+  }
+  
   return undefined
 }
 
 export const SUPPORTED_CHAINS: Record<string, Chain> = (() => {
   // Minimal default set to avoid bundle size pressure; server can dynamically expand
   const mapping: Record<string, Chain> = {}
-  mapping.mainnet = mainnet
-  mapping.ethereum = mainnet
-  mapping.eth = mainnet
+  mapping['mainnet'] = mainnet
+  mapping['ethereum'] = mainnet
+  mapping['eth'] = mainnet
   return mapping
 })()
 

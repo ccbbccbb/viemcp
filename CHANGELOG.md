@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2025-01-08
+
+### Added
+- **Default RPC URLs**: Added fallback public RPC endpoints for 14 common chains (Ethereum, Polygon, Arbitrum, Optimism, Base, Avalanche, BSC, Gnosis, Fantom, Celo, Moonbeam, Aurora)
+- **Comprehensive Audit**: Added detailed MCP architecture audit with future integration plan for ~130+ additional viem tools
+
+### Changed
+- **Major Cleanup**: Completed tool consolidation refactor
+  - Removed empty `src/core/tools/ens.ts` file (was no-op)
+  - Removed `src/core/tools/public.ts` after moving `viemGetLogs` to consolidated
+  - Cleaned up 100+ lines of legacy migration comments from `src/index.ts`
+  - Simplified tool registration to single `registerConsolidatedTools()` call
+- **Architecture**: Reduced from 3 tool files to 1 consolidated file
+  - All 12 consolidated tools now in `src/core/tools/consolidated.ts`
+  - 5 utility tools remain in `src/index.ts`
+  - Total: 17 active tools (was perceived as 31 due to empty registrations)
+
+### Fixed
+- TypeScript index signature access for better strict mode compliance
+- Test suite updated to reflect new architecture
+
+### Documentation
+- Updated AUDIT.md with complete status report and future roadmap
+- Clarified tool count and organization in README
+- Added REVISIONS.md implementation tracking
+
 ## [0.0.4] - 2025-01-08
 
 ### Changed

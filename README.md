@@ -31,13 +31,13 @@ bun run start
 
 ### Environment Variables
 
-Create a `.env` file in the project root. RPC URLs can be provided per-chain and per-provider. By default, provider is `drpc`.
+Create a `.env` file in the project root. RPC URLs can be provided per-chain and per-provider. **As of v0.0.5, the server includes default public RPC URLs for common chains as fallbacks.**
 
 ```env
 # RPC provider selector (optional; default: drpc)
 RPC_PROVIDER=drpc
 
-# RPC endpoints (examples; either generic or provider-specific)
+# RPC endpoints (optional - defaults available for major chains)
 # Generic naming (preferred):
 ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/KEY
 MAINNET_RPC_URL=https://eth.llamarpc.com
@@ -57,6 +57,24 @@ VIEM_CUSTOM_CHAINS=[
   { "id": 8453, "name": "Base", "nativeCurrency": {"name":"Ether","symbol":"ETH","decimals":18}, "rpcUrls": {"default": {"http": ["https://mainnet.base.org"]}} }
 ]
 ```
+
+### Default Chain Support (v0.0.5+)
+
+The server includes default public RPC URLs for these chains (no configuration needed):
+- Ethereum/Mainnet (`mainnet`, `ethereum`, `eth`)
+- Polygon
+- Arbitrum
+- Optimism
+- Base
+- Avalanche
+- BSC (Binance Smart Chain)
+- Gnosis
+- Fantom
+- Celo
+- Moonbeam
+- Aurora
+
+Custom RPC URLs in environment variables always take precedence over defaults.
 
 ### MCP Client Configuration
 
@@ -78,9 +96,9 @@ Add to your MCP client settings (e.g., Claude Desktop):
 
 ## Available Tools
 
-All tool IDs are viem-prefixed. The server now prioritizes consolidated tools to reduce surface area. Below is the current set with argument shapes.
+The server provides 17 tools, all with the `viem` prefix. Tools have been consolidated to reduce complexity while maintaining comprehensive blockchain interaction capabilities.
 
-### Consolidated Tools
+### Consolidated Tools (12 tools)
 
 - viemBlockInfo — Block header plus optional tx count/full txs
     ```ts
@@ -126,19 +144,12 @@ All tool IDs are viem-prefixed. The server now prioritizes consolidated tools to
     ```ts
     args: { includeSupported?: boolean, includeRpcUrl?: boolean, chain?: string }
     ```
-
-### Public primitives
-
 - viemGetLogs — Filter logs by address/topics and range
     ```ts
     args: { address?: string, topics?: unknown[], fromBlock?: string, toBlock?: string, chain?: string }
     ```
-- viemMulticall — Batch multiple contract reads
-    ```ts
-    args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
-    ```
 
-### Utilities
+### Utility Tools (5 tools)
 
 - viemParseEther — Convert ETH to wei
     ```ts
@@ -147,6 +158,10 @@ All tool IDs are viem-prefixed. The server now prioritizes consolidated tools to
 - viemFormatEther — Convert wei to ETH
     ```ts
     args: { value: string }
+    ```
+- viemMulticall — Batch multiple contract reads
+    ```ts
+    args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
     ```
 - viemIsAddress — Validate Ethereum address
     ```ts

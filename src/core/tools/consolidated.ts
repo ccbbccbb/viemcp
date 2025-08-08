@@ -785,5 +785,62 @@ export function registerConsolidatedTools(
     },
   )
 
-  // Standalone alias notes no longer needed since all tools are viem-prefixed
+  // viemGetLogs - Query event logs
+  server.tool(
+    'viemGetLogs',
+    'Get logs by address/topics and block range',
+    {
+      type: 'object',
+      properties: {
+        address: { type: 'string', description: 'Contract address (optional)' },
+        topics: { type: 'array', description: 'Array of topics (optional)' },
+        fromBlock: {
+          type: 'string',
+          description: 'From block (tag or number)',
+        },
+        toBlock: { type: 'string', description: 'To block (tag or number)' },
+        chain: { type: 'string', description: 'Chain to query' },
+      },
+      required: [],
+    },
+    async ({ address, topics, fromBlock, toBlock, chain }) => {
+      try {
+        const client = clientManager.getClient(chain)
+        const params: Record<string, unknown> = {}
+        if (address) {
+          if (!isAddress(address)) {
+            throw new Error('Invalid address')
+          }
+          params['address'] = address as Address
+        }
+        if (Array.isArray(topics)) {
+          params['topics'] = topics as unknown[]
+        }
+        const parseBlock = (v?: string): bigint | BlockTag | undefined => {
+          if (!v) {
+            return undefined
+          }
+          if (/^\d+$/.test(v) || /^0x[0-9a-fA-F]+$/.test(v)) {
+            return BigInt(v)
+          }
+          if (v === 'latest' || v === 'earliest' || v === 'pending') {
+            return v as BlockTag
+          }
+          return undefined
+        }
+        const fb = parseBlock(fromBlock)
+        if (fb !== undefined) {
+          params['fromBlock'] = fb
+        }
+        const tb = parseBlock(toBlock)
+        if (tb !== undefined) {
+          params['toBlock'] = tb
+        }
+        const logs = await client.getLogs(params as any)
+        return jsonResponse({ count: logs.length, logs })
+      } catch (error) {
+        return handleError(error)
+      }
+    },
+  )
 }

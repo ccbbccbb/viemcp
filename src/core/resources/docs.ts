@@ -19,7 +19,7 @@ function getGithubHeaders(): Record<string, string> {
 }
 
 async function fetchViemDocsTree(): Promise<string[]> {
-  const branch = process.env.VIEM_DOCS_BRANCH || 'main'
+  const branch = process.env['VIEM_DOCS_BRANCH'] || 'main'
   const apiUrl = `https://api.github.com/repos/wevm/viem/git/trees/${branch}?recursive=1`
   const res = await fetch(apiUrl, { headers: getGithubHeaders() })
   if (!res.ok) {
@@ -37,7 +37,7 @@ async function fetchViemDocsTree(): Promise<string[]> {
 
 // Simple on-disk cache for tree paths
 function getCacheDir(): string {
-  const override = process.env.VIEM_DOCS_CACHE_DIR
+  const override = process.env['VIEM_DOCS_CACHE_DIR']
   if (override && override.trim().length > 0) {
     return override
   }
@@ -82,8 +82,8 @@ async function writeTreeCache(cache: TreeCache): Promise<void> {
 }
 
 async function getDocsPathsWithCache(): Promise<string[]> {
-  const branch = process.env.VIEM_DOCS_BRANCH || 'main'
-  const ttlMs = Number(process.env.VIEM_DOCS_TTL_MS_TREE) || DEFAULT_TREE_TTL_MS
+  const branch = process.env['VIEM_DOCS_BRANCH'] || 'main'
+  const ttlMs = Number(process.env['VIEM_DOCS_TTL_MS_TREE']) || DEFAULT_TREE_TTL_MS
   const now = Date.now()
   const cached = await readTreeCache()
   if (cached && cached.branch === branch && now - cached.timestampMs <= ttlMs) {
@@ -115,7 +115,7 @@ function registerGithubDocResource(server: McpServer, relativePath: string) {
     },
     async (url) => {
       try {
-        const branch = process.env.VIEM_DOCS_BRANCH || 'main'
+        const branch = process.env['VIEM_DOCS_BRANCH'] || 'main'
         const rawUrl = `https://raw.githubusercontent.com/wevm/viem/${branch}/site/pages/docs/${relativePath}`
         const res = await fetch(rawUrl, {
           headers: { 'User-Agent': 'viemcp-mcp-server' },
@@ -147,7 +147,7 @@ function registerGithubDocResource(server: McpServer, relativePath: string) {
 export async function setupGithubDocsResources(server: McpServer) {
   try {
     const mdxPaths = await getDocsPathsWithCache()
-    const branch = process.env.VIEM_DOCS_BRANCH || 'main'
+    const branch = process.env['VIEM_DOCS_BRANCH'] || 'main'
     // Group by top-level folder to mirror sections
     const groups = new Map<string, string[]>()
     for (const p of mdxPaths) {

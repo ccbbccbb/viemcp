@@ -1,6 +1,13 @@
 'use client'
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons'
-import { useEffect, useRef, useState } from 'react'
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CheckIcon,
+} from '@radix-ui/react-icons'
+import * as Popover from '@radix-ui/react-popover'
+import * as Checkbox from '@radix-ui/react-checkbox'
+import * as ScrollArea from '@radix-ui/react-scroll-area'
+import { useEffect, useState } from 'react'
 
 type Chain = { id: number; name: string; slug: string }
 
@@ -12,28 +19,14 @@ export function ChainMultiSelect({
   onChange: (chains: Chain[]) => void
 }) {
   const [chains, setChains] = useState<Chain[]>([])
-  const [isOpen, setIsOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch('/chains.json')
       .then((r) => r.json())
       .then(setChains)
       .catch(() => setChains([]))
-  }, [])
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const filteredChains = chains.filter(
@@ -58,81 +51,96 @@ export function ChainMultiSelect({
         : `${value.length} networks selected`
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       <div className="flex items-center gap-4">
         <label className="section-heading m-0" htmlFor="multi-chain-button">
           Supported Networks
         </label>
-        <button
-          id="multi-chain-button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="dropdown flex items-center justify-between min-w-[200px]"
-        >
-          <span className="text-sm">{displayText}</span>
-          {isOpen ? (
-            <ChevronUpIcon className="w-4 h-4" />
-          ) : (
-            <ChevronDownIcon className="w-4 h-4" />
-          )}
-        </button>
-      </div>
 
-      {isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 z-50 card max-h-96 overflow-hidden flex flex-col">
-          <div className="p-3 border-b border-[--viem-border]">
-            <input
-              type="text"
-              className="input-field w-full"
-              placeholder="Search networks..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-
-          <div className="overflow-y-auto flex-1 p-2">
-            {filteredChains.length === 0 ? (
-              <div className="text-sm text-[--viem-text-muted] p-3 text-center">
-                No networks found
-              </div>
-            ) : (
-              filteredChains.map((chain) => {
-                const isSelected = value.some((c) => c.id === chain.id)
-                return (
-                  <label
-                    key={chain.id}
-                    className="flex items-center gap-3 p-2 hover:bg-[--viem-border] rounded cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleChain(chain)}
-                      className="cursor-pointer"
-                    />
-                    <span className="text-sm flex-1">
-                      {chain.name}{' '}
-                      <span className="text-[--viem-text-muted]">
-                        ({chain.id})
-                      </span>
-                    </span>
-                  </label>
-                )
-              })
-            )}
-          </div>
-
-          {value.length > 0 && (
-            <div className="p-3 border-t border-[--viem-border]">
-              <button
-                onClick={() => onChange([])}
-                className="text-sm text-[--viem-text-muted] hover:text-[--viem-text]"
-              >
-                Clear all
-              </button>
+        <Popover.Root open={open} onOpenChange={setOpen}>
+          <Popover.Trigger asChild>
+            <button
+              id="multi-chain-button"
+              className="dropdown flex items-center justify-between min-w-[220px]"
+            >
+              <span className="text-sm">{displayText}</span>
+              {open ? (
+                <ChevronUpIcon className="w-4 h-4" />
+              ) : (
+                <ChevronDownIcon className="w-4 h-4" />
+              )}
+            </button>
+          </Popover.Trigger>
+          <Popover.Content
+            sideOffset={8}
+            align="start"
+            className="card w-[340px] p-0 shadow-lg"
+          >
+            <div className="p-3 border-b border-[--viem-border]">
+              <input
+                type="text"
+                className="input-field w-full"
+                placeholder="Search networks..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-          )}
-        </div>
-      )}
+
+            <ScrollArea.Root className="h-64">
+              <ScrollArea.Viewport className="h-full p-2">
+                {filteredChains.length === 0 ? (
+                  <div className="text-sm text-[--viem-text-muted] p-3 text-center">
+                    No networks found
+                  </div>
+                ) : (
+                  filteredChains.map((chain) => {
+                    const isSelected = value.some((c) => c.id === chain.id)
+                    return (
+                      <label
+                        key={chain.id}
+                        className="flex items-center gap-3 p-2 hover:bg-[--viem-border] rounded cursor-pointer"
+                      >
+                        <Checkbox.Root
+                          checked={isSelected}
+                          onCheckedChange={() => toggleChain(chain)}
+                          className="h-4 w-4 rounded border border-[--viem-border] data-[state=checked]:bg-[--viem-heading] flex items-center justify-center"
+                        >
+                          <Checkbox.Indicator>
+                            <CheckIcon className="h-3 w-3 text-white" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
+                        <span className="text-sm flex-1">
+                          {chain.name}{' '}
+                          <span className="text-[--viem-text-muted]">
+                            ({chain.id})
+                          </span>
+                        </span>
+                      </label>
+                    )
+                  })
+                )}
+              </ScrollArea.Viewport>
+              <ScrollArea.Scrollbar
+                orientation="vertical"
+                className="flex select-none touch-none p-0.5 bg-transparent"
+              >
+                <ScrollArea.Thumb className="flex-1 bg-[--viem-border] rounded" />
+              </ScrollArea.Scrollbar>
+            </ScrollArea.Root>
+
+            {value.length > 0 && (
+              <div className="p-3 border-t border-[--viem-border]">
+                <button
+                  onClick={() => onChange([])}
+                  className="text-sm text-[--viem-text-muted] hover:text-[--viem-text]"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+          </Popover.Content>
+        </Popover.Root>
+      </div>
     </div>
   )
 }
