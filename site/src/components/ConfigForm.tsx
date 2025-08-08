@@ -2,8 +2,7 @@
 import * as Accordion from '@radix-ui/react-accordion'
 import { ChevronDownIcon } from '@radix-ui/react-icons'
 import * as RadioGroup from '@radix-ui/react-radio-group'
-import { useMemo, useState } from 'react'
-import { CodeBlock } from './CodeBlock'
+import { useEffect, useMemo, useState } from 'react'
 
 type Chain = { id: number; name: string; slug: string }
 
@@ -138,7 +137,13 @@ function buildCursorConfig(
   )
 }
 
-export function ConfigForm({ selected }: { selected: Chain[] }) {
+export function ConfigForm({
+  selected,
+  onOutputsChange,
+}: {
+  selected: Chain[]
+  onOutputsChange?: (o: { claudeCmd: string; cursorCfg: string }) => void
+}) {
   const [rpcUrl, setRpcUrl] = useState('')
   const [customChainName, setCustomChainName] = useState('')
   const [customChainId, setCustomChainId] = useState('')
@@ -194,15 +199,22 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
     ],
   )
 
+  // Bubble up dynamic outputs so parent sections can render them
+  useEffect(() => {
+    onOutputsChange?.({ claudeCmd, cursorCfg })
+  }, [claudeCmd, cursorCfg, onOutputsChange])
+
   return (
     <section className="space-y-8">
-      <Accordion.Root type="multiple" defaultValue={[]} className="space-y-6">
+      <Accordion.Root type="multiple" defaultValue={[]} className="space-y-2">
         {/* Provider & Keys - first, full width */}
         <Accordion.Item value="provider" className="space-y-4">
           <Accordion.Header>
-            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
-              <h3 className="section-heading m-0">RPC PROVIDER</h3>
-              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
+            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 bg-transparent p-0 border-0">
+              <h3 className="section-heading m-0">
+                CUSTOM RPC PROVIDER API KEY (Optional)
+              </h3>
+              <ChevronDownIcon className="chevron w-4 h-4 text-[--viem-heading] transition-transform" />
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
@@ -303,9 +315,9 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
         {/* Custom RPC - second, full width */}
         <Accordion.Item value="custom-rpc" className="space-y-4">
           <Accordion.Header>
-            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
-              <h3 className="section-heading m-0">CUSTOM RPC URL</h3>
-              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
+            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-0 bg-transparent p-0 border-0">
+              <h3 className="section-heading m-0">CUSTOM RPC URL (Optional)</h3>
+              <ChevronDownIcon className="chevron w-4 h-4 text-[--viem-heading] transition-transform" />
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
@@ -357,11 +369,6 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
           </Accordion.Content>
         </Accordion.Item>
       </Accordion.Root>
-
-      <div className="space-y-6">
-        <CodeBlock title="Claude Code MCP Command" code={claudeCmd} />
-        <CodeBlock title="Cursor MCP Config" code={cursorCfg} />
-      </div>
     </section>
   )
 }

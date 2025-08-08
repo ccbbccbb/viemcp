@@ -1,6 +1,6 @@
-# viemcp
+![viemcp](@viemcp-logo-white.png)
 
-A Model Context Protocol (MCP) server that provides blockchain interaction capabilities through [viem](https://viem.sh), enabling AI assistants to read onchain data, interact with smart contracts, and prepare transactions across multiple EVM chains.
+A Model Context Protocol (MCP) server that provides blockchain interaction capabilities through [viem](https://viem.sh) and [wagmi](https://wagmi.sh), enabling AI assistants to help with integration of both frameworks as well as read onchain data & view smart contract state.
 
 ## Features
 

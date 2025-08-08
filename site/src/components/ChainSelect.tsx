@@ -100,20 +100,25 @@ export function ChainSelect({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="section-heading m-0">NETWORKS</h3>
-        <button
-          type="button"
-          className="text-sm text-[--viem-text-muted] hover:text-[--viem-text] inline-flex items-center gap-1"
-          onClick={() => setShowMore((v) => !v)}
-        >
-          More <ChevronDownIcon className="h-3 w-3" />
-        </button>
+        <h3 className="section-heading m-0 flex items-center">
+          SELECT YOUR NETWORKS
+        </h3>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         {prioritized.map((c) => (
           <Item key={c.id} c={c} />
         ))}
       </div>
+      <div className="flex justify-start">
+        <button
+          type="button"
+          className="text-sm text-[--viem-text-muted] hover:text-[--viem-text] inline-flex items-center gap-1 mt-2"
+          onClick={() => setShowMore((v) => !v)}
+        >
+          More Networks <ChevronDownIcon className="p-0 h-3 w-3" />
+        </button>
+      </div>
+
       {showMore && (
         <div className="mt-3 space-y-3">
           <input

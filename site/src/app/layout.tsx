@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 export const metadata: Metadata = {
   title: 'viemcp — MCP server for Viem',
   description:
-    'Fast setup & flexible config for Model Context Protocol: choose networks, RPC, and keys.',
+    'Fast setup & flexible MCP server to help builders setup & parse onchain data with Viem.',
   applicationName: 'viemcp',
   keywords: ['mcp', 'model-context-protocol', 'viem', 'ethereum', 'evm'],
   authors: [{ name: 'charchar', url: 'https://github.com/ccbbccbb' }],
@@ -14,14 +14,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'viemcp — MCP server for Viem',
     description:
-      'Fast setup & flexible config for Model Context Protocol: choose networks, RPC, and keys.',
+      'Fast setup & flexible MCP server to help builders setup & parse onchain data with Viem.',
     type: 'website',
   },
   twitter: {
     card: 'summary',
     title: 'viemcp — MCP server for Viem',
     description:
-      'Fast setup & flexible config for Model Context Protocol: choose networks, RPC, and keys.',
+      'Fast setup & flexible MCP server to help builders setup & parse onchain data with Viem.',
   },
 }
 
