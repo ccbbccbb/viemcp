@@ -3,6 +3,10 @@ node_modules/
 .pnp
 .pnp.js
 
+# misc
+CONSOLIDATED-TOOLS.md
+AUDIT.md
+
 # Build output
 build/
 dist/
@@ -75,7 +79,8 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Do not ignore app-level public assets inside workspaces
+!/site/public
 
 # Vuepress build output
 .vuepress/dist

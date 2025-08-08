@@ -1,6 +1,6 @@
 {
   "name": "viemcp",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A Model Context Protocol server for blockchain interactions using viem",
   "keywords": [
     "mcp",
@@ -39,19 +39,19 @@
     "start": "node build/index.js",
     "dev": "bun --watch src/index.ts",
     "clean": "rm -rf build",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
+    "biome:check": "biome check .",
+    "biome:format": "biome format . --write",
     "typecheck": "tsc --noEmit",
-    "prepack": "bun run clean && bun run lint && bun run format:check && bun run typecheck && bun run build",
+    "prepack": "bun run clean && bun run biome:check && bun run typecheck && bun run build",
     "prepublishOnly": "bun run prepack",
     "release": "bun run prepack && bun publish --access public",
     "release:dry": "bun run prepack && bun publish --dry-run",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "dev:site": "cd site && bun run dev",
+    "build:site": "cd site && bun run build"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -65,14 +65,10 @@
     "zod": "^4.0.15"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
+    "@biomejs/biome": "^2.1.4",
     "@types/bun": "^1.2.19",
     "@types/node": "^24.2.0",
-    "@typescript-eslint/eslint-plugin": "^8.39.0",
-    "@typescript-eslint/parser": "^8.39.0",
     "@vitest/ui": "^3.2.4",
-    "eslint": "^9.32.0",
-    "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

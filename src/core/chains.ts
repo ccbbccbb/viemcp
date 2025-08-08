@@ -1,92 +1,123 @@
-import { mainnet, type Chain } from "viem/chains";
+import { type Chain, mainnet } from 'viem/chains'
+
+// Default public RPC URLs for common chains (fallback when no env vars set)
+const DEFAULT_RPC_URLS: Record<string, string> = {
+  mainnet: 'https://eth.llamarpc.com',
+  ethereum: 'https://eth.llamarpc.com',
+  eth: 'https://eth.llamarpc.com',
+  polygon: 'https://polygon-rpc.com',
+  arbitrum: 'https://arb1.arbitrum.io/rpc',
+  optimism: 'https://mainnet.optimism.io',
+  base: 'https://mainnet.base.org',
+  avalanche: 'https://api.avax.network/ext/bc/C/rpc',
+  bsc: 'https://bsc-dataseed.binance.org',
+  gnosis: 'https://rpc.gnosischain.com',
+  fantom: 'https://rpc.ftm.tools',
+  celo: 'https://forno.celo.org',
+  moonbeam: 'https://rpc.api.moonbeam.network',
+  aurora: 'https://mainnet.aurora.dev',
+}
 
 export function getRpcUrl(chainName: string): string | undefined {
-  const provider = process.env["RPC_PROVIDER"] || "drpc";
+  const provider = process.env['RPC_PROVIDER'] || 'drpc'
 
   const envVariants = [
     chainName.toUpperCase(),
-    chainName.toUpperCase().replace("-", "_"),
-    chainName.toUpperCase().replace(" ", "_"),
+    chainName.toUpperCase().replace('-', '_'),
+    chainName.toUpperCase().replace(' ', '_'),
     chainName
-      .replace(/([A-Z])/g, "_$1")
+      .replace(/([A-Z])/g, '_$1')
       .toUpperCase()
-      .replace(/^_/, ""),
-  ];
+      .replace(/^_/, ''),
+  ]
 
   for (const variant of envVariants) {
-    const providerUrl = process.env[`${variant}_RPC_URL_${provider.toUpperCase()}`];
+    const providerUrl =
+      process.env[`${variant}_RPC_URL_${provider.toUpperCase()}`]
     if (providerUrl) {
-      return providerUrl;
+      return providerUrl
     }
 
-    const genericUrl = process.env[`${variant}_RPC_URL`];
+    const genericUrl = process.env[`${variant}_RPC_URL`]
     if (genericUrl) {
-      return genericUrl;
+      return genericUrl
     }
   }
-  return undefined;
+
+  // Fall back to default public RPC URLs if available
+  const defaultUrl = DEFAULT_RPC_URLS[chainName.toLowerCase()]
+  if (defaultUrl) {
+    console.error(`Using default public RPC for ${chainName}: ${defaultUrl}`)
+    return defaultUrl
+  }
+
+  return undefined
 }
 
 export const SUPPORTED_CHAINS: Record<string, Chain> = (() => {
   // Minimal default set to avoid bundle size pressure; server can dynamically expand
-  const mapping: Record<string, Chain> = {};
-  mapping["mainnet"] = mainnet;
-  mapping["ethereum"] = mainnet;
-  mapping["eth"] = mainnet;
-  return mapping;
-})();
+  const mapping: Record<string, Chain> = {}
+  mapping['mainnet'] = mainnet
+  mapping['ethereum'] = mainnet
+  mapping['eth'] = mainnet
+  return mapping
+})()
 
 export function registerChain(chain: Chain, aliases: string[] = []) {
-  const c = chain;
-  SUPPORTED_CHAINS[c.name] = c;
-  const normalized = [c.name.toLowerCase(), c.name.replace(/\s+/g, "-").toLowerCase()];
+  const c = chain
+  SUPPORTED_CHAINS[c.name] = c
+  const normalized = [
+    c.name.toLowerCase(),
+    c.name.replace(/\s+/g, '-').toLowerCase(),
+  ]
   for (const key of new Set([...aliases, ...normalized])) {
-    SUPPORTED_CHAINS[key] = c;
+    SUPPORTED_CHAINS[key] = c
   }
 }
 
 export function getChainByName(name: string): Chain | undefined {
-  return SUPPORTED_CHAINS[name] || SUPPORTED_CHAINS[name?.toLowerCase?.() ?? ""];
+  return SUPPORTED_CHAINS[name] || SUPPORTED_CHAINS[name?.toLowerCase?.() ?? '']
 }
 
 export function findChainByIdLocal(id: number): Chain | undefined {
   for (const key of Object.keys(SUPPORTED_CHAINS)) {
-    const c = SUPPORTED_CHAINS[key];
-    if (c && typeof c === "object" && typeof c.id === "number" && c.id === id) {
-      return c as Chain;
+    const c = SUPPORTED_CHAINS[key]
+    if (c && typeof c === 'object' && typeof c.id === 'number' && c.id === id) {
+      return c as Chain
     }
   }
-  return undefined;
+  return undefined
 }
 
 export async function resolveChainById(id: number): Promise<Chain | undefined> {
   try {
-    const allowDynamic = process.env["VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION"] !== "false";
+    const allowDynamic =
+      process.env['VIEM_ENABLE_DYNAMIC_CHAIN_RESOLUTION'] !== 'false'
     if (!allowDynamic) {
-      return undefined;
+      return undefined
     }
-    const all = await import("viem/chains");
-    const values = Object.values(all) as unknown[];
+    const all = await import('viem/chains')
+    const values = Object.values(all) as unknown[]
     const chain = values.find(
-      (c) => c && typeof c === "object" && (c as { id?: number }).id === id
-    ) as Chain | undefined;
-    return chain;
+      (c) => c && typeof c === 'object' && (c as { id?: number }).id === id,
+    ) as Chain | undefined
+    return chain
   } catch {
-    return undefined;
+    return undefined
   }
 }
 
 export function loadCustomChainsFromEnv() {
-  const raw = process.env["VIEM_CUSTOM_CHAINS"];
+  const raw = process.env['VIEM_CUSTOM_CHAINS']
   if (!raw) {
-    return;
+    return
   }
   try {
-    const arr = JSON.parse(raw) as unknown[];
+    const arr = JSON.parse(raw) as unknown[]
     for (const maybeChain of arr) {
-      const c = maybeChain as Partial<Chain>;
-      if (c && typeof c.id === "number" && typeof c.name === "string") {
-        registerChain(c as Chain);
+      const c = maybeChain as Partial<Chain>
+      if (c && typeof c.id === 'number' && typeof c.name === 'string') {
+        registerChain(c as Chain)
       }
     }
   } catch {
