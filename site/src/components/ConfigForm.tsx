@@ -23,6 +23,14 @@ function buildClaudeCodeCmd(
   const defaultChainId = chains.length > 0 ? chains[0].id.toString() : '1'
 
   envs.push(`DEFAULT_CHAIN_ID=${defaultChainId}`)
+  if (chains.length > 0) {
+    const idsCsv = chains.map((c) => c.id).join(',')
+    const namesCsv = chains
+      .map((c) => (c.slug || c.name).replace(/\s+/g, '-'))
+      .join(',')
+    envs.push(`SELECTED_CHAIN_IDS=${idsCsv}`)
+    envs.push(`SELECTED_CHAINS=${namesCsv}`)
+  }
 
   switch (o.provider) {
     case 'drpc':
@@ -78,6 +86,12 @@ function buildCursorConfig(
   const defaultChainId = chains.length > 0 ? chains[0].id.toString() : '1'
 
   env.DEFAULT_CHAIN_ID = defaultChainId
+  if (chains.length > 0) {
+    env.SELECTED_CHAIN_IDS = chains.map((c) => c.id).join(',')
+    env.SELECTED_CHAINS = chains
+      .map((c) => (c.slug || c.name).replace(/\s+/g, '-'))
+      .join(',')
+  }
 
   switch (o.provider) {
     case 'drpc':
@@ -182,69 +196,8 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
 
   return (
     <section className="space-y-8">
-      <Accordion.Root
-        type="multiple"
-        defaultValue={['custom-rpc', 'provider']}
-        className="grid grid-cols-1 md:grid-cols-2 gap-8"
-      >
-        {/* Left Column - Custom RPC */}
-        <Accordion.Item value="custom-rpc" className="space-y-4">
-          <Accordion.Header>
-            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
-              <h3 className="section-heading m-0">CUSTOM RPC URL</h3>
-              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
-            </Accordion.Trigger>
-          </Accordion.Header>
-          <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
-            <div>
-              <label
-                htmlFor="rpc-url"
-                className="block text-sm text-[--viem-text-muted] mb-2"
-              >
-                RPC URL
-              </label>
-              <input
-                id="rpc-url"
-                className="input-field w-full"
-                placeholder="https://rpc.example.org"
-                value={rpcUrl}
-                onChange={(e) => setRpcUrl(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="custom-chain-name"
-                className="block text-sm text-[--viem-text-muted] mb-2"
-              >
-                Chain Name
-              </label>
-              <input
-                id="custom-chain-name"
-                className="input-field w-full"
-                placeholder="my-chain"
-                value={customChainName}
-                onChange={(e) => setCustomChainName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="custom-chain-id"
-                className="block text-sm text-[--viem-text-muted] mb-2"
-              >
-                Chain ID
-              </label>
-              <input
-                id="custom-chain-id"
-                className="input-field w-full"
-                placeholder="1337"
-                value={customChainId}
-                onChange={(e) => setCustomChainId(e.target.value)}
-              />
-            </div>
-          </Accordion.Content>
-        </Accordion.Item>
-
-        {/* Right Column - Provider & Keys */}
+      <Accordion.Root type="multiple" defaultValue={[]} className="space-y-6">
+        {/* Provider & Keys - first, full width */}
         <Accordion.Item value="provider" className="space-y-4">
           <Accordion.Header>
             <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
@@ -344,6 +297,63 @@ export function ConfigForm({ selected }: { selected: Chain[] }) {
                 />
               </div>
             )}
+          </Accordion.Content>
+        </Accordion.Item>
+
+        {/* Custom RPC - second, full width */}
+        <Accordion.Item value="custom-rpc" className="space-y-4">
+          <Accordion.Header>
+            <Accordion.Trigger className="accordion-trigger flex items-center gap-2 mb-2 bg-transparent p-0 border-0">
+              <h3 className="section-heading m-0">CUSTOM RPC URL</h3>
+              <ChevronDownIcon className="mb-4 chevron w-4 h-4 text-[--viem-heading] transition-transform" />
+            </Accordion.Trigger>
+          </Accordion.Header>
+          <Accordion.Content className="space-y-4 data-[state=closed]:hidden">
+            <div>
+              <label
+                htmlFor="rpc-url"
+                className="block text-sm text-[--viem-text-muted] mb-2"
+              >
+                RPC URL
+              </label>
+              <input
+                id="rpc-url"
+                className="input-field w-full"
+                placeholder="https://rpc.example.org"
+                value={rpcUrl}
+                onChange={(e) => setRpcUrl(e.target.value)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="custom-chain-name"
+                className="block text-sm text-[--viem-text-muted] mb-2"
+              >
+                Chain Name
+              </label>
+              <input
+                id="custom-chain-name"
+                className="input-field w-full"
+                placeholder="my-chain"
+                value={customChainName}
+                onChange={(e) => setCustomChainName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="custom-chain-id"
+                className="block text-sm text-[--viem-text-muted] mb-2"
+              >
+                Chain ID
+              </label>
+              <input
+                id="custom-chain-id"
+                className="input-field w-full"
+                placeholder="1337"
+                value={customChainId}
+                onChange={(e) => setCustomChainId(e.target.value)}
+              />
+            </div>
           </Accordion.Content>
         </Accordion.Item>
       </Accordion.Root>

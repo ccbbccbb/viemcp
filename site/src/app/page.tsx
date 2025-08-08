@@ -2,7 +2,7 @@
 import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import { SiNpm } from 'react-icons/si'
-import { ChainMultiSelect } from '@/components/ChainMultiSelect'
+import { ChainSelect } from '@/components/ChainSelect'
 import { ConfigForm } from '@/components/ConfigForm'
 
 type Chain = { id: number; name: string; slug: string }
@@ -53,7 +53,7 @@ export default function Page() {
             CUSTOM CONFIG
           </h2>
           <div className="mb-8">
-            <ChainMultiSelect value={selected} onChange={setSelected} />
+            <ChainSelect value={selected} onChange={setSelected} />
           </div>
           <ConfigForm selected={selected} />
         </div>

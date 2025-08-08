@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Default RPC URLs**: Added fallback public RPC endpoints for 14 common chains (Ethereum, Polygon, Arbitrum, Optimism, Base, Avalanche, BSC, Gnosis, Fantom, Celo, Moonbeam, Aurora)
+- **Embedded Pattern Library**: Zero-latency access to viem/wagmi code patterns (offline)
+  - `src/core/knowledge/patterns.ts` with 30+ common patterns
+  - Pattern search functionality
+  - Instant access without network calls
+- **Wagmi Support**: 
+  - `generate_wagmi_code` prompt for React component generation
+  - `viem_wagmi_pattern` prompt for pattern retrieval
+  - Wagmi hooks patterns and best practices
+  - Wagmi documentation resource links
+- **Enhanced Resources**:
+  - `viem://patterns` - Viem code patterns
+  - `wagmi://patterns` - Wagmi React patterns
+  - `web3://common-patterns` - Common Web3 patterns
+  - `patterns://search?q=QUERY` - Pattern search
+  - `wagmi://docs/getting-started` - Wagmi docs links
 - **Comprehensive Audit**: Added detailed MCP architecture audit with future integration plan for ~130+ additional viem tools
 
 ### Changed
@@ -27,6 +42,11 @@ All notable changes to this project will be documented in this file.
 - Updated AUDIT.md with complete status report and future roadmap
 - Clarified tool count and organization in README
 - Added REVISIONS.md implementation tracking
+- Overhauled `DEPLOYMENT.md`: step-by-step GitHub Actions guide for npm and Vercel, required repository secrets, and inline environment reference
+- Noted that `DEPLOYMENT.md` is ignored via `.gitignore` to keep CI runbook internal
+
+### Removed
+- Deleted `env.example` (replaced with inline reference block inside `DEPLOYMENT.md`)
 
 ## [0.0.4] - 2025-01-08
 

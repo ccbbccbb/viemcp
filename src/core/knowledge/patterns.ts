@@ -364,7 +364,7 @@ export function getPattern(
 export function searchPatterns(
   query: string,
 ): Array<{ category: string; pattern: string; code: string }> {
-  const results = []
+  const results: Array<{ category: string; pattern: string; code: string }> = []
   const searchTerm = query.toLowerCase()
 
   for (const [category, patterns] of Object.entries({

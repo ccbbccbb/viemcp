@@ -6,6 +6,8 @@ node_modules/
 # misc
 CONSOLIDATED-TOOLS.md
 AUDIT.md
+DEPLOYMENT.md
+SITEMAP.md
 
 # Build output
 build/
