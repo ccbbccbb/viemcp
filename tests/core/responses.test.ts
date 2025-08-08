@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { textResponse, jsonResponse, handleError } from './responses';
+import { textResponse, jsonResponse, handleError } from '../../src/core/responses';
 
 describe('responses', () => {
   describe('textResponse', () => {

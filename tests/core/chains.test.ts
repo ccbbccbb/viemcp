@@ -7,7 +7,7 @@ import {
   getChainByName,
   findChainByIdLocal,
   loadCustomChainsFromEnv,
-} from './chains';
+} from '../../src/core/chains';
 
 describe('chains', () => {
   beforeEach(() => {

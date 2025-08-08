@@ -9,7 +9,7 @@ import {
   GetBalanceSchema,
   ReadContractSchema,
   MulticallSchema,
-} from './validation';
+} from '../../src/core/validation';
 
 describe('validation schemas', () => {
   describe('AddressSchema', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ClientManager } from './clientManager';
-import { registerChain } from './chains';
+import { ClientManager } from '../../src/core/clientManager';
+import { registerChain } from '../../src/core/chains';
 import { mainnet } from 'viem/chains';
 
 // Mock viem's createPublicClient
