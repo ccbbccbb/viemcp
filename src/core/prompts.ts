@@ -7,6 +7,78 @@ import { z } from 'zod'
  */
 export function registerEVMPrompts(server: McpServer) {
   server.registerPrompt(
+    'generate_wagmi_code',
+    {
+      title: 'Generate wagmi React code',
+      description:
+        'Generate React hooks code using wagmi for Web3 interactions',
+      argsSchema: {
+        feature: z.string(),
+        hints: z.string().optional(),
+      } as any,
+    },
+    ((args: any, _extra: unknown) => {
+      const { feature, hints } = z
+        .object({ feature: z.string(), hints: z.string().optional() })
+        .parse(args)
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text:
+                `You are assisting in writing React code using wagmi hooks.\n` +
+                `Use the embedded wagmi patterns as reference.\n\n` +
+                `Goal: ${feature}\n` +
+                (hints ? `Hints: ${hints}\n` : '') +
+                `Deliver:\n` +
+                `1) Component structure with hooks\n` +
+                `2) Error handling and loading states\n` +
+                `3) TypeScript types if applicable\n` +
+                `4) Integration notes`,
+            },
+          },
+        ],
+      }
+    }) as any,
+  )
+
+  server.registerPrompt(
+    'viem_wagmi_pattern',
+    {
+      title: 'Get viem/wagmi pattern',
+      description: 'Retrieve best practice patterns for viem or wagmi',
+      argsSchema: {
+        pattern: z.string(),
+        category: z.enum(['viem', 'wagmi', 'common']).optional(),
+      } as any,
+    },
+    ((args: any, _extra: unknown) => {
+      const { pattern, category } = z
+        .object({
+          pattern: z.string(),
+          category: z.enum(['viem', 'wagmi', 'common']).optional(),
+        })
+        .parse(args)
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text:
+                `Provide the best practice pattern for: ${pattern}\n` +
+                (category ? `Category: ${category}\n` : '') +
+                `Include code example and explanation of when to use this pattern.`,
+            },
+          },
+        ],
+      }
+    }) as any,
+  )
+
+  server.registerPrompt(
     'generate_viem_code',
     {
       title: 'Generate viem code',

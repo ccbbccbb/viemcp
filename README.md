@@ -9,7 +9,9 @@ A Model Context Protocol (MCP) server that provides blockchain interaction capab
 - **Token Standards**: ERC20 read operations (balance, metadata, allowance)
 - **ENS**: Resolve ENS names, reverse lookups, and fetch resolvers
 - **Tx Prep & Encoding**: Prepare transaction requests; encode function and deploy data
-- **Docs Resources**: Live, queryable resources for viem documentation from GitHub
+- **Embedded Patterns**: Instant access to viem/wagmi code patterns (offline, zero-latency)
+- **Wagmi Support**: React hooks patterns and code generation for Web3 UIs
+- **Docs Resources**: Live viem docs from GitHub + embedded pattern library
 - **Type Safety**: TypeScript throughout with viem's type inference
   - Centralized types in `src/core/types.ts` for tool outputs and parameters
 - **Security-First**: Read-only; prepares unsigned transactions only (no key management)
@@ -26,6 +28,10 @@ bun run build
 # Start the server
 bun run start
 ```
+
+## Deployment
+
+See `DEPLOYMENT.md` for publishing to npm and deploying the `site/` app to Vercel, including required secrets and example GitHub Actions workflows. Example environment variables are in `env.example`.
 
 ## Configuration
 
@@ -176,29 +182,51 @@ The server provides 17 tools, all with the `viem` prefix. Tools have been consol
 
 In addition to tools, this server exposes live documentation resources for viem. These are fetched directly from GitHub and exposed under the `viem://docs/*` URI scheme.
 
-### Docs Resources
-- `viem://docs/github-index` — Lists all available viem docs pages (from the configured branch)
+### Documentation Resources
+
+#### Viem Documentation (GitHub-based)
+- `viem://docs/github-index` — Lists all available viem docs pages
 - `viem://docs/github/{path}.mdx` — Raw content of a specific viem docs page
 
-Note: Chain/address/tx resources are not currently implemented. Use tools for onchain data.
+#### Embedded Pattern Library (Offline, Zero-latency)
+- `viem://patterns` — Common viem code patterns
+- `wagmi://patterns` — Wagmi React hooks patterns  
+- `web3://common-patterns` — Common Web3 development patterns
+- `patterns://search?q=QUERY` — Search all patterns
+- `wagmi://docs/getting-started` — Wagmi documentation links
 
 ## Available Prompts
 
 Prompts are higher-level assistants bundled with the server:
 
+### Code Generation
 - `generate_viem_code`
   - **Args**: `feature` (string), `hints` (optional string)
-  - **Behavior**: Instructs the model to consult viem docs resources and output a plan, code, setup notes, and citations
+  - **Behavior**: Generates viem code consulting docs resources
   - **Attached resource**: `viem://docs/github-index`
+
+- `generate_wagmi_code` *(New in v0.0.5)*
+  - **Args**: `feature` (string), `hints` (optional string)  
+  - **Behavior**: Generates React components with wagmi hooks
+  - **Uses**: Embedded wagmi patterns for instant reference
+
+- `viem_wagmi_pattern` *(New in v0.0.5)*
+  - **Args**: `pattern` (string), `category` (optional: 'viem'|'wagmi'|'common')
+  - **Behavior**: Retrieves specific pattern with explanation
+  - **Uses**: Embedded pattern library
+
+### Analysis
 - `analyze_transaction`
   - **Args**: `txHash` (string), `chain` (optional; defaults to `ethereum`)
-  - **Behavior**: Requests a human-style analysis of a transaction
+  - **Behavior**: Human-style transaction analysis
+
 - `analyze_address`
   - **Args**: `address` (string), `chain` (optional; defaults to `ethereum`)
-  - **Behavior**: Requests a human-style analysis of an address
+  - **Behavior**: Human-style address analysis
+
 - `search_viem_docs`
   - **Args**: `query` (string)
-  - **Behavior**: Searches the registered viem docs resources and summarizes findings
+  - **Behavior**: Searches viem docs and summarizes findings
   - **Attached resource**: `viem://docs/github-index`
 
 ## Usage Examples

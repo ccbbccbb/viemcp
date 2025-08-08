@@ -40,7 +40,7 @@ export default function Page() {
         </nav>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-12 space-y-6 text-center flex flex-col items-center">
+      <section className="mx-auto max-w-6xl px-6 py-8 space-y-6 text-center flex flex-col items-center">
         <h1 className="text-4xl md:text-6xl font-bold font-title">viemcp</h1>
         <p className="text-lg md:text-xl text-[--viem-text-muted]">
           Fast setup & flexible config - choose networks, RPC, & keys.
@@ -59,8 +59,14 @@ export default function Page() {
         </div>
       </section>
 
-      <footer className="mx-auto max-w-6xl px-6 py-10 text-sm text-[--viem-text-muted]">
-        Built with Next.js 15 + Tailwind v4 - styled by viem.
+      <footer className="mx-auto max-w-6xl px-6 py-10 text-sm text-[--viem-text-muted] text-center">
+        Built @ Paradigm Frontiers 2025 • Contribute? Feedback?{' '}
+        <a
+          href="mailto:char@automatethestack.com"
+          className="underline hover:text-[--viem-text] transition-colors"
+        >
+          Get in Touch Here
+        </a>
       </footer>
     </main>
   )

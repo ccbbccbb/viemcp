@@ -15,6 +15,7 @@ import {
 import { ClientManager } from './core/clientManager.js'
 import { registerEVMPrompts } from './core/prompts.js'
 import { setupGithubDocsResources } from './core/resources/docs.js'
+import { setupPatternResources } from './core/resources/patterns.js'
 import { handleError, jsonResponse, textResponse } from './core/responses.js'
 import { registerConsolidatedTools } from './core/tools/consolidated.js'
 import {
@@ -233,13 +234,17 @@ server.tool(
 // Start server
 async function main() {
   const transport = new StdioServerTransport()
-  // Register GitHub-based Viem docs resources before connecting
-  await setupGithubDocsResources(server)
 
-  // Register prompts
+  // Register resources
+  await setupGithubDocsResources(server) // GitHub-based Viem docs
+  setupPatternResources(server) // Embedded viem/wagmi patterns (offline)
+
+  // Register prompts (includes wagmi code generation)
   registerEVMPrompts(server)
+
   // Register consolidated tools (includes all blockchain operations)
   registerConsolidatedTools(server, clientManager)
+
   await server.connect(transport)
   console.error('viemcp started successfully')
 }
