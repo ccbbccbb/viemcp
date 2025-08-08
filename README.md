@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="site/public/viemcp-logo-white.png" alt="viemcp" />
+  <img src="site/public/viemcp-logo-blanc.png" alt="viemcp" />
 
   <p>
     A Model Context Protocol (MCP) server that provides blockchain interaction capabilities through
