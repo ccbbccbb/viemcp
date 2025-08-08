@@ -77,40 +77,9 @@ Add to your MCP client settings (e.g., Claude Desktop):
 
 ## Available Tools
 
-All tool IDs are viem-prefixed. Below is the complete list with argument shapes.
+All tool IDs are viem-prefixed. The server now prioritizes consolidated tools to reduce surface area. Below is the current set with argument shapes.
 
-### Core Blockchain Tools
-
-- viemGetBalance — Get native token balance
-  - args: { address: string, chain?: string }
-- viemGetBlock — Get block by number or tag
-  - args: { numberOrTag: string, includeTransactions?: boolean, chain?: string }
-  - notes: numberOrTag accepts decimal, 0x-hex, or tags: latest | earliest | pending
-- viemGetBlockNumber — Get latest block number
-  - args: { chain?: string }
-- viemGetTransaction — Get transaction details
-  - args: { hash: string, chain?: string }
-- viemGetTransactionReceipt — Get transaction receipt
-  - args: { hash: string, chain?: string }
-- viemGetGasPrice — Get current gas price
-  - args: { chain?: string }
-- viemEstimateGas — Estimate gas for a transaction request
-  - args: { from?: string, to?: string, data?: string, value?: string, chain?: string }
-- viemGetChainId — Get chain ID
-  - args: { chain?: string }
-- viemListSupportedChains — List supported chains
-  - args: {}
-- viemGetTransactionCount — Get account nonce
-  - args: { address: string, blockTag?: string, chain?: string }
-- viemGetBlockTransactionCount — Number of txs in a block
-  - args: { numberOrTag: string, chain?: string }
-- viemGetLogs — Filter logs by address/topics and range
-  - args: { address?: string, topics?: unknown[], fromBlock?: string, toBlock?: string, chain?: string }
-  - notes: fromBlock/toBlock accept decimal or 0x-hex (or tags when applicable)
-- viemGetFeeHistory — EIP-1559 fee history
-  - args: { blockCount: string, newestBlock: string, rewardPercentiles?: number[], chain?: string }
-
-### Consolidated High-level Tools
+### Consolidated Tools
 
 - viemBlockInfo — Block header plus optional tx count/full txs
   - args: { numberOrTag?: string, includeTxCount?: boolean, includeFullTransactions?: boolean, chain?: string }
@@ -120,63 +89,27 @@ All tool IDs are viem-prefixed. Below is the complete list with argument shapes.
   - args: { address: string, blockTag?: string, historicalBalanceAt?: string, includeNonce?: boolean, chain?: string }
 - viemGasInfo — Gas price and/or fee history
   - args: { includePrice?: boolean, history?: { blockCount?: string, newestBlock?: string, rewardPercentiles?: number[] }, chain?: string }
-- viemChainInfo — Chain id and supported chains
-  - args: { includeSupported?: boolean, includeRpcUrl?: boolean, chain?: string }
-
-### Contract Tools
-
-- viemReadContract — Read a contract function
-  - args: { address: string, abi: unknown[], functionName: string, args?: unknown[], chain?: string }
-- viemSimulateContract — Simulate a contract call
-  - args: { address: string, abi: unknown[], functionName: string, args?: unknown[], chain?: string, from?: string, value?: string }
-- viemEstimateContractGas — Estimate gas for a contract call
-  - args: { address: string, abi: unknown[], functionName: string, args?: unknown[], chain?: string, from?: string, value?: string }
-- viemMulticall — Batch multiple contract reads
-  - args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
-- viemGetCode — Get contract bytecode at an address
-  - args: { address: string, chain?: string }
-- viemGetStorageAt — Read raw storage slot at an address
-  - args: { address: string, slot: string, blockTag?: string, chain?: string }
-- viemContractState — Get contract code and/or storage slots
-  - args: { address: string, slots?: string[], blockTag?: string, includeCode?: boolean, includeStorage?: boolean, chain?: string }
-- viemContractAction — Read/simulate/estimateGas for a function
-  - args: { action: "read" | "simulate" | "estimateGas", address: string, abi: unknown[], functionName: string, args?: unknown[], account?: string, value?: string, blockTag?: string, chain?: string }
-
-### Token Tools (ERC20)
-
-- viemGetERC20Balance — Get token balance
-  - args: { tokenAddress: string, ownerAddress: string, chain?: string }
-- viemGetERC20Metadata — Get token metadata
-  - args: { tokenAddress: string, chain?: string }
-- viemGetERC20Allowance — Get spender allowance
-  - args: { tokenAddress: string, owner: string, spender: string, chain?: string }
+- viemEnsInfo — Resolve ENS data for name/address (address, name, resolver, avatar, text records)
+  - args: { lookupType: "name" | "address", value: string, includeAddress?: boolean, includeName?: boolean, includeResolver?: boolean, includeAvatar?: boolean, textKeys?: string[], chain?: string }
 - viemErc20Info — Combined ERC20 metadata/balance/allowance
   - args: { token: string, owner?: string, spender?: string, includeMetadata?: boolean, includeBalance?: boolean, includeAllowance?: boolean, chain?: string }
-
-### ENS Tools
-
-- viemResolveEnsAddress — Resolve ENS name to address (+avatar/texts)
-  - args: { name: string, chain?: string, includeAvatar?: boolean, textKeys?: string[] }
-  - notes: returns address; when includeAvatar is true, returns avatar; when textKeys provided, returns selected ENS text records
-- viemGetEnsName — Reverse resolve address to name
-  - args: { address: string, chain?: string }
-- viemGetEnsResolver — Get ENS resolver for a name
-  - args: { name: string, chain?: string }
-- viemEnsInfo — Resolve ENS data for name/address
-  - args: { lookupType: "name" | "address", value: string, includeAddress?: boolean, includeName?: boolean, includeResolver?: boolean, includeAvatar?: boolean, textKeys?: string[], chain?: string }
-
-### Transaction Prep & Encoding
-
-- viemPrepareTransactionRequest — Prepare unsigned tx request
-  - args: { from?: string, to?: string, data?: string, value?: string, gas?: string, maxFeePerGas?: string, maxPriorityFeePerGas?: string, gasPrice?: string, nonce?: string, chain?: string }
-- viemEncodeFunctionData — Encode contract call data
-  - args: { abi: unknown[], functionName: string, args?: unknown[] }
-- viemEncodeDeployData — Encode deploy data
-  - args: { abi: unknown[], bytecode: string, args?: unknown[] }
-- viemEncodeData — Encode function/deploy data (generic)
+- viemContractState — Get contract code and/or storage slots
+  - args: { address: string, slots?: string[], blockTag?: string, includeCode?: boolean, includeStorage?: boolean, chain?: string }
+- viemEncodeData — Encode function/deploy data
   - args: { mode: "function" | "deploy", abi: unknown[], functionName?: string, args?: unknown[], bytecode?: string, constructorArgs?: unknown[] }
+- viemContractAction — Read/simulate/estimateGas for a function
+  - args: { action: "read" | "simulate" | "estimateGas", address: string, abi: unknown[], functionName: string, args?: unknown[], account?: string, value?: string, blockTag?: string, chain?: string }
 - viemTransactionBuild — Estimate gas or prepare tx
   - args: { mode: "estimateGas" | "prepare", from?: string, to?: string, data?: string, value?: string, gas?: string, maxFeePerGas?: string, maxPriorityFeePerGas?: string, gasPrice?: string, nonce?: string, chain?: string }
+- viemChainInfo — Chain id and optionally supported chains/RPC URL
+  - args: { includeSupported?: boolean, includeRpcUrl?: boolean, chain?: string }
+
+### Public primitives
+
+- viemGetLogs — Filter logs by address/topics and range
+  - args: { address?: string, topics?: unknown[], fromBlock?: string, toBlock?: string, chain?: string }
+- viemMulticall — Batch multiple contract reads
+  - args: { contracts: { address: string, abi: unknown[], functionName: string, args?: unknown[] }[], allowFailure?: boolean, chain?: string }
 
 ### Utilities
 
@@ -222,15 +155,16 @@ Prompts are higher-level assistants bundled with the server:
 
 ### Get ETH Balance
 ```javascript
-// Resolve ENS then fetch balance
-const { address } = await callTool("viemResolveEnsAddress", { name: "vitalik.eth", textKeys: ["com.twitter"], includeAvatar: true })
+// Resolve ENS via consolidated tool then fetch balance
+const { address } = await callTool("viemEnsInfo", { lookupType: "name", value: "vitalik.eth", includeAddress: true, includeAvatar: true, textKeys: ["com.twitter"] })
   .then(r => JSON.parse(r.content[0].text));
-await callTool("viemGetBalance", { address, chain: "ethereum" });
+await callTool("viemAccountInfo", { address, chain: "ethereum" });
 ```
 
 ### Read Smart Contract
 ```javascript
-await callTool("viemReadContract", {
+await callTool("viemContractAction", {
+  action: "read",
   address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
   abi: [...], // ERC20 ABI
   functionName: "balanceOf",
@@ -241,7 +175,8 @@ await callTool("viemReadContract", {
 
 ### Prepare Transaction Request
 ```javascript
-await callTool("viemPrepareTransactionRequest", {
+await callTool("viemTransactionBuild", {
+  mode: "prepare",
   to: "0x...",
   value: "1000000000000000000", // 1 ETH in wei
   chain: "ethereum"
@@ -264,7 +199,7 @@ The server ships with a minimal default set (Ethereum mainnet aliases: `mainnet`
 List what is currently available at runtime with:
 
 ```javascript
-await callTool("viemListSupportedChains", {});
+await callTool("viemChainInfo", { includeSupported: true });
 ```
 
 ## Security Considerations
