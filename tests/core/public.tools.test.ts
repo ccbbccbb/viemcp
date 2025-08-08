@@ -4,7 +4,7 @@ import { registerPublicTools } from "../../src/core/tools/public.js";
 // Create a lightweight fake client manager
 class FakeClientManager {
   public client = {
-    getLogs: vi.fn(async (_params: any) => []) as unknown as jest.Mock,
+    getLogs: vi.fn(async (_params: any) => []),
   } as any;
   getClient() {
     return this.client;
@@ -51,5 +51,3 @@ describe("public tools", () => {
     expect(secondCall.toBlock === "pending").toBe(true);
   });
 });
-
-
