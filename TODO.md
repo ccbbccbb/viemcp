@@ -47,22 +47,22 @@ IMPORTANT:
 
 ## Prompts Plan
 
-- [ ] generate_viem_code
+- [x] generate_viem_code
   - Goal: Given a requested feature, read `viem://docs/github-index` and relevant `viem://docs/github/{path}` resources to propose correct viem code snippets and integration steps.
   - Inputs: `{ feature: string, hints?: string }`
   - Output: Stepwise codegen plan + code blocks + cited resource URIs
 
-- [ ] analyze_transaction
+- [x] analyze_transaction
   - Goal: Ask the model to analyze a transaction hash on a chain (structure aligned with evm-mcp-server prompt)
   - Inputs: `{ txHash: string, chain?: string }`
   - Output: Explanatory analysis text
 
-- [ ] analyze_address
+- [x] analyze_address
   - Goal: Ask the model to analyze an address on a chain (balance, nonce, activity overview)
   - Inputs: `{ address: string, chain?: string }`
   - Output: Explanatory analysis text
 
-- [ ] search_viem_docs
+- [x] search_viem_docs
   - Goal: Ask the model to search/browse our viem docs resources for a topic and summarize with links
   - Inputs: `{ query: string }`
   - Output: Summarized answer with `viem://docs/github/...` links
@@ -70,31 +70,31 @@ IMPORTANT:
 ## Viem Documentation
 ## Additional Public Actions (Read-only)
 
-- [ ] getTransactionCount
+- [x] getTransactionCount
   - Implementation: `client.getTransactionCount({ address, blockTag? })`
   - Validation: `isAddress(address)`; `blockTag` in [latest|pending|earliest] or number/hex
   - Output: `{ address, nonce, chain }`
   - viem: `getTransactionCount`
 
-- [ ] getBlockTransactionCount
+- [x] getBlockTransactionCount
   - Implementation: `client.getBlockTransactionCount({ blockTag|blockNumber })`
   - Validation: `numberOrTag` as tag or number/hex
   - Output: `{ numberOrTag, count, chain }`
   - viem: `getBlockTransactionCount`
 
-- [ ] getLogs
+- [x] getLogs
   - Implementation: `client.getLogs({ address?, topics?, fromBlock?, toBlock? })`
   - Validation: `isAddress(address)` if provided; block tags or numbers
   - Output: `{ count, logs }`
   - viem: `getLogs`
 
-- [ ] getFeeHistory
+- [x] getFeeHistory
   - Implementation: `client.getFeeHistory({ blockCount, newestBlock, rewardPercentiles? })`
   - Validation: `blockCount` > 0; `newestBlock` tag or number; `rewardPercentiles` number[]
   - Output: raw fee history JSON
   - viem: `getFeeHistory`
 
-- [ ] getEnsResolver
+- [x] getEnsResolver
   - Implementation: `client.getEnsResolver({ name })`
   - Validation: `name` string (normalized internally by viem)
   - Output: `{ name, resolver }`

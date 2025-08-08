@@ -26,7 +26,8 @@ export function registerEVMPrompts(server: McpServer) {
               type: "text" as const,
               text:
                 `You are assisting in writing TypeScript code using viem.\n` +
-                `Consult the attached Viem docs index to locate relevant pages, and cite specific viem://docs/github/... resources.\n\n` +
+                `Consult the attached Viem docs index to locate relevant pages, and cite specific viem://docs/github/... resources.\n` +
+                `Use ONLY these local (cached) viem:// resources as the source of truth — do not use external web search.\n\n` +
                 `Goal: ${feature}\n` +
                 (hints ? `Hints: ${hints}\n` : "") +
                 `Deliver:\n` +
@@ -113,7 +114,9 @@ export function registerEVMPrompts(server: McpServer) {
             {
               type: "text" as const,
               text:
-                `Search the Viem docs resources for: "${query}". Use the attached index to locate relevant pages, then gather and cite specific viem://docs/github/... pages. Provide a concise summary and a short how-to snippet if applicable.`,
+                `Search the Viem docs resources for: "${query}". Use the attached index to locate relevant pages, then gather and cite specific viem://docs/github/... pages.\n` +
+                `Use ONLY local (cached) viem:// resources — avoid external web search.\n` +
+                `Provide a concise summary and a short how-to snippet if applicable.`,
             },
             {
               // Attach the Viem docs index for immediate access
